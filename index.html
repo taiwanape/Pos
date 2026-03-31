@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 蘋果專用 PWA 標籤，讓它長得像真 App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="五結POS">
-    <title>五結大腸麵線 POS</title>
+    <meta name="apple-mobile-web-app-title" content="斷網專用POS">
+    <title>五結大腸麵線 斷網版POS</title>
     <style>
         :root {
             --primary: #2563eb; --primary-light: #eff6ff; --bg: #e5e7eb;
@@ -32,8 +33,10 @@
         
         /* 內部元件設計 */
         .header { background: white; padding: 12px 16px; border-radius: 12px; font-weight: bold; border-left: 6px solid var(--primary); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0; }
-        .header-title { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+        .header-title { font-size: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .header-tag { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 16px; }
+        .offline-status { font-size: 13px; background: var(--green); color: white; padding: 3px 8px; border-radius: 12px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding-bottom: 20px; }
         @media (min-width: 640px) { .menu-grid { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(6, 1fr); gap: 10px; padding-bottom: 0; height: 100%; } }
         
@@ -88,7 +91,10 @@
 <div class="app-container">
     <div class="menu-section">
         <div class="header">
-            <div class="header-title"><span class="header-tag">五結</span> 大腸麵線</div>
+            <div class="header-title">
+                <span class="header-tag">五結</span> 大腸麵線
+                <span id="offline-tag" class="offline-status">✓ 離線防護已啟用</span>
+            </div>
             <div style="color: #6b7280;">03-9505237</div>
         </div>
         <div class="menu-grid" id="menu-grid">
@@ -141,6 +147,48 @@
 </div>
 
 <script>
+    // ----------------------------------------------------------------
+    // 終極斷網防護技術 (Service Worker) - 將整個網頁深度快取到平板內
+    // ----------------------------------------------------------------
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            const swCode = `
+                const CACHE_NAME = 'wujie-pos-offline-v1';
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => {
+                            // 強制記憶當前網址的所有畫面與程式
+                            return cache.addAll([ location.pathname ]);
+                        }).then(() => self.skipWaiting())
+                    );
+                });
+                self.addEventListener('activate', event => {
+                    event.waitUntil(self.clients.claim());
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            // 有網路就抓最新的，沒網路或斷線就直接拿記憶體的！
+                            return response || fetch(event.request);
+                        }).catch(() => {
+                            return caches.match(location.pathname);
+                        })
+                    );
+                });
+            `;
+            // 將上面的防護程式塞入瀏覽器底層
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).then(() => {
+                document.getElementById('offline-tag').style.display = 'inline-block';
+                console.log('✅ 終極斷網防護已啟動！');
+            });
+        });
+    }
+
+    // ----------------------------------------------------------------
+    // 結帳系統核心程式碼
+    // ----------------------------------------------------------------
     const MENU = [
         { id: 1, name: '綜合煎', price: 85 }, { id: 2, name: '蚵仔煎', price: 75 },
         { id: 3, name: '蝦仔煎', price: 75 }, { id: 4, name: '蛋煎', price: 65 },
