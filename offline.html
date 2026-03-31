@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 版本號：V1.0.5 (修改此處可強制所有裝置更新) -->
-    <meta name="app-version" content="1.0.5">
+    <!-- 版本號碼：1.1.1 (移除報錯代碼，恢復正常顯示) -->
+    <meta name="app-version" content="1.1.1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
-    <title>五結大腸麵線 斷網版POS</title>
+    <title>五結大腸麵線 POS</title>
     <style>
         :root {
             --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6;
@@ -22,10 +22,10 @@
         }
 
         /* --- 核心排版結構 --- */
-        .app-container { display: flex; flex-direction: column; width: 100%; }
-        .menu-section { padding: 12px; height: auto; overflow: visible; }
-        .cart-section { background: white; display: flex; flex-direction: column; height: auto; overflow: visible; border-top: 4px solid #d1d5db; padding-bottom: 60px; }
-        .cart-list { padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 8px; background: #f9fafb; height: auto; overflow: visible; min-height: 120px; }
+        .app-container { display: flex; flex-direction: column; width: 100%; min-height: 100vh; }
+        .menu-section { padding: 12px; flex: 1; }
+        .cart-section { background: white; display: flex; flex-direction: column; border-top: 4px solid #d1d5db; padding-bottom: env(safe-area-inset-bottom); }
+        .cart-list { padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 8px; background: #f9fafb; min-height: 100px; }
 
         @media (min-width: 768px) {
             body, html { height: 100%; overflow: hidden; }
@@ -35,12 +35,11 @@
             .cart-list { flex: 1; overflow-y: auto; }
         }
 
-        /* --- 內部元件設計 --- */
+        /* --- 元件設計 --- */
         .header { background: white; padding: 12px 16px; border-radius: 12px; font-weight: bold; border-left: 6px solid var(--primary); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 12px; }
         .header-title { font-size: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
         .header-tag { background: var(--primary); color: white; padding: 2px 6px; border-radius: 6px; font-size: 16px; }
-        .history-btn { margin-left: 8px; padding: 6px 12px; font-size: 14px; background: #4b5563; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .offline-status { font-size: 11px; background: var(--green); color: white; padding: 2px 6px; border-radius: 10px; display: none; }
+        .history-btn { padding: 8px 12px; font-size: 14px; background: #4b5563; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 480px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -59,6 +58,7 @@
 
         .checkout-panel { padding: 16px; border-top: 2px solid #e5e7eb; background: white; }
         .total-price { font-size: 42px; font-weight: 900; color: var(--red); line-height: 1; }
+        .input-wrapper { position: relative; }
         .input-wrapper input { width: 100%; padding: 14px 14px 14px 40px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 24px; font-weight: bold; text-align: right; }
         .quick-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
         .quick-btn { padding: 12px 0; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
@@ -69,29 +69,40 @@
 
         /* --- 歷史訂單 & 訊息盒彈窗 --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
-        .history-list { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; background: #f3f4f6; }
-        .history-item { border: 2px solid #e5e7eb; border-radius: 12px; padding: 12px; background: #fff; }
+        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .history-list { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; background: #f3f4f6; }
+        .history-item { border: 2px solid #e5e7eb; border-radius: 12px; padding: 14px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .history-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .del-order-btn { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; border-radius: 6px; padding: 6px 12px; font-size: 14px; font-weight: bold; z-index: 10; }
+        
+        .del-order-btn { 
+            background: #fee2e2; color: var(--red); border: 1px solid #fecaca; border-radius: 8px; 
+            padding: 8px 12px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
 
-        /* 自定義訊息盒 (取代 Alert/Confirm) */
+        /* 更新提示條 */
+        #update-banner { position: fixed; top: 0; left: 0; width: 100%; background: var(--primary); color: white; padding: 14px; text-align: center; font-weight: bold; z-index: 9999; display: none; cursor: pointer; box-shadow: 0 3px 15px rgba(0,0,0,0.3); font-size: 18px; }
+
+        /* 自定義訊息盒 */
         #msg-box { display: none; z-index: 2000; }
         .msg-content { background: white; padding: 24px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .msg-text { font-size: 18px; font-weight: bold; margin-bottom: 20px; white-space: pre-wrap; line-height: 1.5; }
         .msg-btns { display: flex; gap: 10px; }
-        .msg-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .msg-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
 
-        /* --- 列印專用樣式 --- */
+        .version-tag { text-align: center; font-size: 10px; color: #9ca3af; padding: 10px; }
+
+        /* --- 列印專用 --- */
         #print-area { display: none; }
         @media print {
-            .app-container, .modal-overlay { display: none !important; }
-            #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; }
+            .app-container, .modal-overlay, #update-banner { display: none !important; }
+            #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; color: black; }
             @page { margin: 0; }
         }
     </style>
 </head>
 <body>
+
+<div id="update-banner" onclick="window.location.reload(true)">✨ 發現新版本！點擊此處立即更新 ✨</div>
 
 <div class="app-container">
     <div class="menu-section">
@@ -99,13 +110,11 @@
             <div class="header-title">
                 <span class="header-tag">五結</span> 大腸麵線
                 <button class="history-btn" onclick="openHistory()">📜 歷史紀錄</button>
-                <span id="offline-tag" class="offline-status">✓ 離線</span>
             </div>
             <div style="color: #6b7280; font-size: 14px;">03-9505237</div>
         </div>
-        <div class="menu-grid" id="menu-grid">
-            <!-- 菜單由 JS 動態生成 -->
-        </div>
+        <div class="menu-grid" id="menu-grid"></div>
+        <div class="version-tag">五結大腸麵線 POS 系統 | 版本: <span id="current-v-text"></span></div>
     </div>
 
     <div class="cart-section">
@@ -114,7 +123,7 @@
             <button class="clear-btn" onclick="askClearCart()">清空</button>
         </div>
         <div class="cart-list" id="cart-list">
-            <div class="empty-msg" style="padding:40px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>
+            <div style="padding:40px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>
         </div>
         <div class="checkout-panel">
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px;">
@@ -122,18 +131,18 @@
                 <span class="total-price" id="total-price">$0</span>
             </div>
             <div class="input-wrapper">
-                <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:24px;">$</span>
+                <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:24px;">$</span>
                 <input type="number" id="paid-input" placeholder="客人付多少？" oninput="handlePaidInput(event)">
             </div>
             <div class="quick-btns">
-                <button class="quick-btn btn-green" onclick="setQuickAmount('exact')">剛好</button>
-                <button class="quick-btn btn-gray" onclick="setQuickAmount(100)">100</button>
-                <button class="quick-btn btn-gray" onclick="setQuickAmount(500)">500</button>
-                <button class="quick-btn btn-gray" onclick="setQuickAmount(1000)">1000</button>
-                <button class="quick-btn btn-red" onclick="setQuickAmount('clear')">重填</button>
+                <button class="quick-btn btn-green" style="background:#dcfce7; color:var(--green);" onclick="setQuickAmount('exact')">剛好</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(100)">100</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(500)">500</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(1000)">1000</button>
+                <button class="quick-btn btn-red" style="background:#fee2e2; color:var(--red);" onclick="setQuickAmount('clear')">重填</button>
             </div>
             <div class="change-row">
-                <span class="change-label">找零</span>
+                <span style="font-weight:bold; color:#4b5563;">找零</span>
                 <span class="change-val" id="change-val">$0</span>
             </div>
             <div class="action-btns">
@@ -144,21 +153,19 @@
     </div>
 </div>
 
-<!-- 歷史紀錄視窗 -->
 <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div style="padding:16px; border-bottom:2px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="margin:0; font-size:18px;">📜 歷史訂單</h2>
-            <div style="display:flex; gap:10px;">
-                <button onclick="askClearHistory()" style="color:#ef4444; background:none; border:none; font-weight:bold; cursor:pointer;">清空</button>
-                <button onclick="closeHistory()" style="font-size:24px; border:none; background:none; color:#9ca3af;">×</button>
+        <div style="padding:16px; border-bottom:2px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;">
+            <h2 style="margin:0; font-size:18px;">📜 歷史訂單紀錄</h2>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <button onclick="askClearHistory()" style="color:var(--red); background:none; border:none; font-weight:bold; cursor:pointer;">清空</button>
+                <button onclick="closeHistory()" style="font-size:30px; border:none; background:none; color:#9ca3af; line-height:1;">×</button>
             </div>
         </div>
         <div id="history-list-container" class="history-list"></div>
     </div>
 </div>
 
-<!-- 自定義訊息盒 -->
 <div id="msg-box" class="modal-overlay">
     <div class="msg-content">
         <div id="msg-box-text" class="msg-text"></div>
@@ -184,8 +191,9 @@
     let cart = {}; let paidAmount = '';
     let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
     let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
+    const currentVersion = document.querySelector('meta[name="app-version"]').content;
+    document.getElementById('current-v-text').innerText = currentVersion;
 
-    // --- 初始化菜單 ---
     function initMenu() {
         const grid = document.getElementById('menu-grid');
         grid.innerHTML = MENU.map(item => `
@@ -195,9 +203,22 @@
                 <div class="menu-price">$${item.price}</div>
             </div>
         `).join('');
+        updateUI();
     }
 
-    // --- 自定義訊息盒程式 ---
+    // --- 自動偵測更新機制 ---
+    async function checkUpdate() {
+        try {
+            const res = await fetch(location.href + (location.href.includes('?') ? '&' : '?') + 't=' + new Date().getTime(), { cache: 'no-store' });
+            const text = await res.text();
+            const match = text.match(/meta name="app-version" content="(.*?)"/);
+            if (match && match[1] !== currentVersion) {
+                document.getElementById('update-banner').style.display = 'block';
+            }
+        } catch (e) {}
+    }
+    setInterval(checkUpdate, 60000); 
+
     function showMsg(text, options = []) {
         return new Promise((resolve) => {
             const box = document.getElementById('msg-box');
@@ -205,15 +226,12 @@
             const btns = document.getElementById('msg-box-btns');
             txt.innerText = text;
             btns.innerHTML = '';
-            
             if (options.length === 0) options = [{ label: '好的', color: 'var(--primary)', val: true }];
-            
             options.forEach(opt => {
                 const b = document.createElement('button');
                 b.className = 'msg-btn';
                 b.innerText = opt.label;
                 b.style.backgroundColor = opt.color;
-                b.style.color = 'white';
                 b.onclick = () => { box.style.display = 'none'; resolve(opt.val); };
                 btns.appendChild(b);
             });
@@ -221,26 +239,9 @@
         });
     }
 
-    // --- 自動更新功能 ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-            `;
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
-                document.getElementById('offline-tag').style.display = 'inline';
-                // 每 30 秒檢查一次 GitHub 是否有新版本
-                setInterval(() => reg.update(), 30000);
-            });
-        });
-    }
-
-    // --- 點餐功能 ---
     function addToCart(id) { cart[id] = (cart[id] || 0) + 1; updateUI(); }
     function removeFromCart(id) { if(cart[id]) cart[id]--; if(cart[id]<=0) delete cart[id]; updateUI(); }
+    
     function updateUI() {
         MENU.forEach(item => {
             const btn = document.getElementById('btn-' + item.id);
@@ -253,25 +254,24 @@
         let itemsHtml = Object.entries(cart).map(([id, qty]) => {
             const item = MENU.find(m => m.id == id);
             return `<div class="cart-item">
-                <div class="item-info"><strong>${item.name}</strong><small>$${item.price}</small></div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <strong style="color:var(--primary)">$${item.price*qty}</strong>
+                <div style="display:flex; flex-direction:column;"><strong style="font-size:16px;">${item.name}</strong><small style="color:#6b7280;">單價$${item.price}</small></div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <strong style="color:var(--primary); font-size:18px;">$${item.price*qty}</strong>
                     <div class="qty-controls">
                         <button class="qty-btn" onclick="removeFromCart(${id})">-</button>
-                        <span style="width:30px; text-align:center; font-weight:bold;">${qty}</span>
+                        <span style="width:34px; text-align:center; font-weight:bold;">${qty}</span>
                         <button class="qty-btn" onclick="addToCart(${id})">+</button>
                     </div>
                 </div>
             </div>`;
         }).join('');
-        list.innerHTML = itemsHtml || '<div class="empty-msg" style="padding:40px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>';
+        list.innerHTML = itemsHtml || '<div style="padding:40px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>';
         document.getElementById('total-price').innerText = '$' + total;
-        
         const paid = parseInt(paidAmount) || 0;
-        const changeVal = document.getElementById('change-val');
-        if (paidAmount === '') { changeVal.innerText = '$0'; changeVal.style.color = 'var(--text)'; }
-        else if (paid >= total) { changeVal.innerText = '$' + (paid - total); changeVal.style.color = 'var(--green)'; }
-        else { changeVal.innerText = '不足'; changeVal.style.color = 'var(--red)'; }
+        const cv = document.getElementById('change-val');
+        if (paidAmount === '') { cv.innerText = '$0'; cv.style.color = '#1f2937'; }
+        else if (paid >= total) { cv.innerText = '$' + (paid - total); cv.style.color = 'var(--green)'; }
+        else { cv.innerText = '不足'; cv.style.color = 'var(--red)'; }
     }
 
     function handlePaidInput(e) { paidAmount = e.target.value; updateUI(); }
@@ -286,8 +286,9 @@
 
     async function askClearCart() {
         if (Object.keys(cart).length === 0) return;
-        const ok = await showMsg('確定要清空目前的點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}]);
-        if (ok) { cart = {}; paidAmount = ''; document.getElementById('paid-input').value = ''; updateUI(); window.scrollTo(0,0); }
+        if (await showMsg('確定要清空目前的點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) {
+            cart = {}; paidAmount = ''; document.getElementById('paid-input').value = ''; updateUI(); window.scrollTo(0,0);
+        }
     }
 
     async function checkout(isPrint) {
@@ -295,7 +296,6 @@
         if (total === 0) return showMsg('還沒有點餐喔！');
         const paid = parseInt(paidAmount) || total;
         if (paid < total) return showMsg('客人付的錢不夠喔！');
-
         const order = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: [], total, paid, change: paid - total };
         Object.entries(cart).forEach(([id, qty]) => {
             const item = MENU.find(m => m.id == id);
@@ -304,7 +304,6 @@
         orderHistory.unshift(order);
         localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
         localStorage.setItem('wujie_counter', orderCounter);
-
         if (isPrint) {
             const area = document.getElementById('print-area');
             area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${order.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${order.change}<hr><center>謝謝光臨</center>`;
@@ -312,33 +311,30 @@
         } else {
             await showMsg(`✅ 結帳完成！\n總計: $${total}\n收現: $${paid}\n找零: $${order.change}`);
         }
-
-        cart = {}; paidAmount = ''; document.getElementById('paid-input').value = ''; 
-        updateUI(); window.scrollTo(0,0);
+        cart = {}; paidAmount = ''; document.getElementById('paid-input').value = ''; updateUI(); window.scrollTo(0,0);
     }
 
-    // --- 歷史紀錄邏輯 ---
-    function openHistory() {
-        renderHistory();
-        document.getElementById('history-modal').style.display = 'flex';
-    }
+    function openHistory() { renderHistory(); document.getElementById('history-modal').style.display = 'flex'; }
     function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
     
     function renderHistory() {
         const container = document.getElementById('history-list-container');
-        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#9ca3af;">尚無紀錄</div>'; return; }
+        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:50px; color:#9ca3af; font-weight:bold;">尚無紀錄</div>'; return; }
         container.innerHTML = orderHistory.map((o, idx) => `
             <div class="history-item" onclick="toggleDetails(${o.id})">
                 <div class="history-item-header">
-                    <span>#${String(o.id).padStart(3,'0')} <small>${o.time}</small></span>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <strong style="color:var(--red); font-size:18px;">$${o.total}</strong>
-                        <button class="del-order-btn" onclick="askDeleteOrder(${idx}, event)">刪除</button>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:6px; font-size:14px;">#${String(o.id).padStart(3,'0')}</span>
+                        <span style="color:#6b7280; font-size:14px;">${o.time}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <strong style="color:var(--red); font-size:20px;">$${o.total}</strong>
+                        <button class="del-order-btn" onclick="askDeleteOrder(${idx}, event)">🗑️</button>
                     </div>
                 </div>
-                <div id="details-${o.id}" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; font-size:14px; color:#666;">
-                    ${o.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}
-                    <div style="margin-top:5px; text-align:right;">收現:$${o.paid} 找零:$${o.change}</div>
+                <div id="details-${o.id}" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #ddd; font-size:15px; color:#4b5563;">
+                    ${o.items.map(i=>`<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>${i.name} x${i.qty}</span><span>$${i.subtotal}</span></div>`).join('')}
+                    <div style="margin-top:8px; text-align:right; font-weight:bold; border-top:1px solid #eee; padding-top:8px;">收現:$${o.paid} 找零:$${o.change}</div>
                 </div>
             </div>
         `).join('');
@@ -346,19 +342,25 @@
 
     function toggleDetails(id) {
         const el = document.getElementById('details-' + id);
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
     async function askDeleteOrder(idx, e) {
         e.stopPropagation();
-        const ok = await showMsg('確定要刪除這筆訂單紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'刪除', color: 'var(--red)', val:true}]);
-        if (ok) { orderHistory.splice(idx, 1); localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); }
+        if (await showMsg('確定要刪除這筆訂單嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'刪除', color: 'var(--red)', val:true}])) {
+            orderHistory.splice(idx, 1);
+            localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
+            renderHistory();
+        }
     }
 
     async function askClearHistory() {
         if (orderHistory.length === 0) return;
-        const ok = await showMsg('⚠️ 確定要清空所有歷史紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定清空', color: 'var(--red)', val:true}]);
-        if (ok) { orderHistory = []; localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); }
+        if (await showMsg('⚠️ 確定要清空「所有」歷史紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定清空', color: 'var(--red)', val:true}])) {
+            orderHistory = [];
+            localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
+            renderHistory();
+        }
     }
 
     window.onload = initMenu;
