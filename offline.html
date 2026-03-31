@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 蘋果專用 PWA 標籤 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="斷網專用POS">
+    <title>五結大腸麵線 斷網版POS</title>
+    <style>
+        :root {
+            --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6;
+            --text: #1f2937; --red: #ef4444; --green: #16a34a;
+        }
+        * { 
+            box-sizing: border-box; 
+            /* 鎖死雙擊放大功能 (非常重要) */
+            touch-action: manipulation; 
+        }
+        
+        /* 基礎設定：手機預設可以自然上下滑動 */
+        body, html {
+            margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg); color: var(--text); 
+            /* 鎖死文字選取，避免長按反白 */
+            -webkit-user-select: none; user-select: none;
+            /* 手機版允許自然滾動 */
+            height: auto; overflow: visible;
+        }
+
+        /* --- 核心排版結構 (手機版：自然往下滾，沒有卷軸) --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .menu-section {
+            padding: 12px;
+            height: auto; /* 不限制高度 */
+            overflow: visible;
+        }
+
+        .cart-section {
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: auto; /* 不限制高度 */
+            overflow: visible;
+            border-top: 4px solid #d1d5db;
+            padding-bottom: 60px; /* 避開 iPhone 底部的橫條 */
+        }
+        
+        .cart-list {
+            padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 8px;
+            background: #f9fafb;
+            height: auto; /* 購物車內容多長就多長 */
+            overflow: visible;
+            min-height: 150px;
+        }
+
+        /* --- iPad & 大螢幕排版 (大於 768px 時自動啟動左右滿版分割) --- */
+        @media (min-width: 768px) {
+            body, html { height: 100%; overflow: hidden; } /* 平板鎖死畫面不讓背景滑動 */
+            .app-container {
+                flex-direction: row;
+                height: 100dvh;
+            }
+            .menu-section {
+                flex: 1; /* 左側佔滿剩餘空間 */
+                height: 100%;
+                overflow-y: auto;
+                padding: 16px;
+            }
+            .cart-section {
+                width: 400px; /* 右側結帳區固定寬度 */
+                height: 100%;
+                border-top: none;
+                border-left: 2px solid #d1d5db;
+                padding-bottom: 0;
+            }
+            .cart-list {
+                flex: 1;
+                overflow-y: auto; /* 只有購物車內部可以滑動 */
+            }
+        }
+
+        /* --- 內部元件設計 --- */
+        .header { background: white; padding: 12px 16px; border-radius: 12px; font-weight: bold; border-left: 6px solid var(--primary); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 12px; }
+        .header-title { font-size: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+        .header-tag { background: var(--primary); color: white; padding: 2px 6px; border-radius: 6px; font-size: 16px; }
+        
+        /* 離線狀態標籤設計 */
+        .offline-status { font-size: 13px; background: var(--green); color: white; padding: 3px 8px; border-radius: 12px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (min-width: 480px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .menu-btn { background: white; border: 3px solid transparent; border-radius: 12px; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 2px 6px rgba(0,0,0,0.06); -webkit-tap-highlight-color: transparent; }
+        .menu-btn:active { transform: scale(0.95); background: #f9fafb; }
+        .menu-btn.active { background: var(--primary-light); border-color: var(--primary); }
+        
+        .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; width: 28px; height: 28px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 5; }
+        .menu-btn.active .badge { display: flex; }
+        
+        .menu-name { font-size: 18px; font-weight: bold; margin-bottom: 6px; color: #1f2937; text-align: center;}
+        .menu-price { font-size: 16px; font-weight: bold; color: #6b7280; }
+        .menu-btn.active .menu-price { color: var(--primary); }
+
+        .cart-header { background: #1f2937; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; flex-shrink: 0; }
+        .clear-btn { background: #4b5563; border: none; color: white; padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .clear-btn:active { background: var(--red); }
+
+        .empty-msg { padding: 40px 0; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 18px; font-weight: bold; text-align: center; }
+        
+        .cart-item { background: white; padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .item-info { display: flex; flex-direction: column; gap: 4px; }
+        .item-name { font-weight: bold; font-size: 16px; color: #1f2937; }
+        .item-price-unit { font-size: 14px; color: #6b7280; }
+        
+        .item-actions { display: flex; align-items: center; gap: 12px; }
+        .item-total { font-weight: bold; font-size: 18px; color: var(--primary); width: 45px; text-align: right; }
+        
+        .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 8px; border: 1px solid #d1d5db; overflow: hidden; }
+        .qty-btn { background: white; border: none; padding: 0; width: 36px; height: 36px; font-size: 20px; font-weight: bold; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .qty-btn:active { background: #e5e7eb; }
+        .qty-val { width: 36px; text-align: center; font-weight: bold; font-size: 16px; line-height: 36px; }
+
+        .checkout-panel { padding: 16px; border-top: 2px solid #e5e7eb; flex-shrink: 0; background: white; }
+        .total-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+        .total-label { font-weight: bold; color: #6b7280; font-size: 16px; }
+        .total-price { font-size: 42px; font-weight: 900; color: var(--red); line-height: 1; }
+        
+        .input-wrapper { position: relative; margin-bottom: 12px; }
+        .input-wrapper input { width: 100%; padding: 14px 14px 14px 40px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 24px; font-weight: bold; text-align: right; outline: none; transition: border 0.2s; }
+        .input-wrapper input:focus { border-color: var(--primary); }
+        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 24px; font-weight: bold; }
+        
+        .quick-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+        .quick-btn { padding: 12px 0; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .btn-green { background: #dcfce7; color: var(--green); border: 1px solid #bbf7d0; }
+        .btn-gray { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .btn-red { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; }
+        
+        .change-row { background: #f3f4f6; padding: 16px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+        .change-label { font-size: 18px; font-weight: bold; color: #4b5563; }
+        .change-val { font-size: 32px; font-weight: 900; }
+        
+        .submit-btn { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="menu-section">
+        <div class="header">
+            <div class="header-title">
+                <span class="header-tag">五結</span> 大腸麵線
+                <span id="offline-tag" class="offline-status">✓ 離線防護已啟用</span>
+            </div>
+            <div style="color: #6b7280;">03-9505237</div>
+        </div>
+        <div class="menu-grid" id="menu-grid">
+            <div class="menu-btn" id="btn-1" onclick="addToCart(1)"><div class="badge" id="badge-1">0</div><div class="menu-name">綜合煎</div><div class="menu-price">$85</div></div>
+            <div class="menu-btn" id="btn-2" onclick="addToCart(2)"><div class="badge" id="badge-2">0</div><div class="menu-name">蚵仔煎</div><div class="menu-price">$75</div></div>
+            <div class="menu-btn" id="btn-3" onclick="addToCart(3)"><div class="badge" id="badge-3">0</div><div class="menu-name">蝦仔煎</div><div class="menu-price">$75</div></div>
+            <div class="menu-btn" id="btn-4" onclick="addToCart(4)"><div class="badge" id="badge-4">0</div><div class="menu-name">蛋煎</div><div class="menu-price">$65</div></div>
+            <div class="menu-btn" id="btn-5" onclick="addToCart(5)"><div class="badge" id="badge-5">0</div><div class="menu-name">大腸麵線(大)</div><div class="menu-price">$60</div></div>
+            <div class="menu-btn" id="btn-6" onclick="addToCart(6)"><div class="badge" id="badge-6">0</div><div class="menu-name">大腸麵線(小)</div><div class="menu-price">$50</div></div>
+            <div class="menu-btn" id="btn-7" onclick="addToCart(7)"><div class="badge" id="badge-7">0</div><div class="menu-name">臭豆腐</div><div class="menu-price">$55</div></div>
+            <div class="menu-btn" id="btn-8" onclick="addToCart(8)"><div class="badge" id="badge-8">0</div><div class="menu-name">炸餛飩</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-9" onclick="addToCart(9)"><div class="badge" id="badge-9">0</div><div class="menu-name">米粉羹(大)</div><div class="menu-price">$40</div></div>
+            <div class="menu-btn" id="btn-10" onclick="addToCart(10)"><div class="badge" id="badge-10">0</div><div class="menu-name">米粉羹(小)</div><div class="menu-price">$35</div></div>
+            <div class="menu-btn" id="btn-11" onclick="addToCart(11)"><div class="badge" id="badge-11">0</div><div class="menu-name">餛飩麵</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-12" onclick="addToCart(12)"><div class="badge" id="badge-12">0</div><div class="menu-name">陽春麵</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-13" onclick="addToCart(13)"><div class="badge" id="badge-13">0</div><div class="menu-name">乾麵</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-14" onclick="addToCart(14)"><div class="badge" id="badge-14">0</div><div class="menu-name">魚丸湯</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-15" onclick="addToCart(15)"><div class="badge" id="badge-15">0</div><div class="menu-name">貢丸湯</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-16" onclick="addToCart(16)"><div class="badge" id="badge-16">0</div><div class="menu-name">餛飩湯</div><div class="menu-price">$45</div></div>
+            <div class="menu-btn" id="btn-17" onclick="addToCart(17)"><div class="badge" id="badge-17">0</div><div class="menu-name">一串心</div><div class="menu-price">$20</div></div>
+            <div class="menu-btn" id="btn-18" onclick="addToCart(18)"><div class="badge" id="badge-18">0</div><div class="menu-name">茶葉蛋</div><div class="menu-price">$15</div></div>
+        </div>
+    </div>
+
+    <div class="cart-section">
+        <div class="cart-header" id="cart-start">
+            <span>🛒 購物明細</span>
+            <button class="clear-btn" onclick="clearAll(true)">清空</button>
+        </div>
+        <div class="cart-list" id="cart-list">
+            <div class="empty-msg">等待點餐...</div>
+        </div>
+        <div class="checkout-panel">
+            <div class="total-row"><span class="total-label">總計金額</span><span class="total-price" id="total-price">$0</span></div>
+            <div class="input-wrapper">
+                <span class="input-icon">$</span>
+                <input type="number" id="paid-input" placeholder="客人付多少？" oninput="handleInput(event)">
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn btn-green" onclick="setQuickAmount('exact')">剛好</button>
+                <button class="quick-btn btn-gray" onclick="setQuickAmount(100)">100</button>
+                <button class="quick-btn btn-gray" onclick="setQuickAmount(500)">500</button>
+                <button class="quick-btn btn-gray" onclick="setQuickAmount(1000)">1000</button>
+                <button class="quick-btn btn-red" onclick="setQuickAmount('clear')">清除</button>
+            </div>
+            <div class="change-row"><span class="change-label">找零</span><span class="change-val" id="change-val">$0</span></div>
+            <button class="submit-btn" onclick="checkout()">完成結帳 (下一位)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ----------------------------------------------------------------
+    // 終極斷網防護技術 (Service Worker) - 將整個網頁深度快取到平板內
+    // ----------------------------------------------------------------
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            const swCode = `
+                const CACHE_NAME = 'wujie-pos-offline-v2';
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => {
+                            // 強制記憶當前網址的所有畫面與程式
+                            return cache.addAll([ location.pathname ]);
+                        }).then(() => self.skipWaiting())
+                    );
+                });
+                self.addEventListener('activate', event => {
+                    event.waitUntil(self.clients.claim());
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            // 有網路就抓最新的，沒網路或斷線就直接拿記憶體的！
+                            return response || fetch(event.request);
+                        }).catch(() => {
+                            return caches.match(location.pathname);
+                        })
+                    );
+                });
+            `;
+            // 將上面的防護程式塞入瀏覽器底層
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).then(() => {
+                document.getElementById('offline-tag').style.display = 'inline-block';
+                console.log('✅ 終極斷網防護已啟動！');
+            });
+        });
+    }
+
+    // --- 防止 iOS Safari 雙點擊放大與雙指縮放防護機制 ---
+    document.addEventListener('dblclick', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('gesturestart', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+
+    const MENU = [
+        { id: 1, name: '綜合煎', price: 85 }, { id: 2, name: '蚵仔煎', price: 75 },
+        { id: 3, name: '蝦仔煎', price: 75 }, { id: 4, name: '蛋煎', price: 65 },
+        { id: 5, name: '大腸麵線(大)', price: 60 }, { id: 6, name: '大腸麵線(小)', price: 50 },
+        { id: 7, name: '臭豆腐', price: 55 }, { id: 8, name: '炸餛飩', price: 45 },
+        { id: 9, name: '米粉羹(大)', price: 40 }, { id: 10, name: '米粉羹(小)', price: 35 },
+        { id: 11, name: '餛飩麵', price: 45 }, { id: 12, name: '陽春麵', price: 45 },
+        { id: 13, name: '乾麵', price: 45 }, { id: 14, name: '魚丸湯', price: 45 },
+        { id: 15, name: '貢丸湯', price: 45 }, { id: 16, name: '餛飩湯', price: 45 },
+        { id: 17, name: '一串心', price: 20 }, { id: 18, name: '茶葉蛋', price: 15 }
+    ];
+
+    let cart = {}; let paidAmount = '';
+    const cartList = document.getElementById('cart-list');
+    const totalPriceEl = document.getElementById('total-price'); 
+    const paidInput = document.getElementById('paid-input');
+    const changeValEl = document.getElementById('change-val');
+
+    function getTotal() {
+        let total = 0;
+        for (let id in cart) { const item = MENU.find(m => m.id == id); if (item) total += item.price * cart[id]; }
+        return total;
+    }
+
+    function updateUI() {
+        MENU.forEach(item => {
+            const btn = document.getElementById('btn-' + item.id);
+            const badge = document.getElementById('badge-' + item.id);
+            const qty = cart[item.id] || 0;
+            if (qty > 0) { btn.classList.add('active'); badge.innerText = qty; } 
+            else { btn.classList.remove('active'); }
+        });
+
+        cartList.innerHTML = '';
+        const total = getTotal(); let isEmpty = true;
+        for (let id in cart) {
+            if (cart[id] > 0) {
+                isEmpty = false; const item = MENU.find(m => m.id == id);
+                const li = document.createElement('div'); li.className = 'cart-item';
+                li.innerHTML = `<div class="item-info"><div class="item-name">${item.name}</div><div class="item-price-unit">$${item.price}</div></div>
+                                <div class="item-actions"><div class="item-total">$${item.price * cart[id]}</div>
+                                <div class="qty-controls"><button class="qty-btn" onclick="removeFromCart(${item.id})">-</button>
+                                <div class="qty-val">${cart[id]}</div><button class="qty-btn" onclick="addToCart(${item.id})">+</button></div></div>`;
+                cartList.appendChild(li);
+            }
+        }
+        if (isEmpty) cartList.innerHTML = `<div class="empty-msg">等待點餐...</div>`;
+
+        totalPriceEl.innerText = '$' + total;
+        paidInput.value = paidAmount;
+        const paid = parseInt(paidAmount);
+        if (paidAmount === '') { changeValEl.innerText = '$0'; changeValEl.style.color = '#1f2937'; }
+        else if (!isNaN(paid) && paid >= total) { changeValEl.innerText = '$' + (paid - total); changeValEl.style.color = 'var(--green)'; }
+        else { changeValEl.innerText = '不足'; changeValEl.style.color = 'var(--red)'; }
+    }
+
+    function addToCart(id) { 
+        cart[id] = (cart[id] || 0) + 1; 
+        updateUI(); 
+        // 如果是手機版，點餐後輕微提示可以往下滑
+        if (window.innerWidth < 768 && Object.keys(cart).length === 1 && cart[id] === 1) {
+            // 可選：自動滑動到結帳區
+        }
+    }
+    function removeFromCart(id) { if (!cart[id]) return; cart[id]--; if (cart[id] <= 0) delete cart[id]; updateUI(); }
+    function clearAll(ask = false) {
+        if (Object.keys(cart).length === 0) return;
+        if (!ask || confirm('確定要清空嗎？')) { cart = {}; paidAmount = ''; updateUI(); window.scrollTo({top: 0, behavior: 'smooth'}); }
+    }
+    function handleInput(e) { paidAmount = e.target.value; updateUI(); }
+    function setQuickAmount(type) {
+        if (type === 'exact') paidAmount = getTotal().toString();
+        else if (type === 'clear') paidAmount = '';
+        else paidAmount = type.toString();
+        updateUI();
+    }
+    function checkout() {
+        const total = getTotal();
+        if (total === 0) return alert('請先點餐喔！');
+        const paid = parseInt(paidAmount);
+        if (paidAmount !== '' && (isNaN(paid) || paid < total)) return alert('客人付的錢不夠喔！');
+        const actualPaid = paidAmount === '' ? total : paid;
+        alert(`✅ 結帳成功！\n\n總計：$${total}\n收現：$${actualPaid}\n找零：$${actualPaid - total}`);
+        cart = {}; paidAmount = ''; updateUI();
+        window.scrollTo({top: 0, behavior: 'smooth'}); // 結帳完自動捲回最上方
+    }
+</script>
+</body>
+</html>
