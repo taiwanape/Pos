@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 版本號碼：1.2.3 (移動歷史紀錄至右下角浮動鈕，避開 iPhone 12 mini 劉海) -->
-    <meta name="app-version" content="1.2.3">
+    <!-- 版本號碼：1.2.4 (將歷史紀錄改為內嵌長條鈕，完全避開劉海死角) -->
+    <meta name="app-version" content="1.2.4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
@@ -26,10 +26,10 @@
         /* --- 核心排版結構 --- */
         .app-container { 
             display: flex; flex-direction: column; width: 100%; 
-            padding-top: env(safe-area-inset-top); /* 確保內容不會被 iPhone 劉海擋住 */
+            padding-top: env(safe-area-inset-top); 
         }
 
-        .menu-section { padding: 10px; flex: 1; -webkit-overflow-scrolling: touch; position: relative; }
+        .menu-section { padding: 10px; flex: 1; -webkit-overflow-scrolling: touch; }
         .cart-section { background: white; display: flex; flex-direction: column; border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); }
 
         @media (min-width: 768px) {
@@ -41,26 +41,26 @@
         }
 
         /* --- 元件設計 --- */
-        .header { background: white; padding: 12px 14px; border-radius: 12px; font-weight: bold; border-left: 6px solid var(--primary); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        .header { 
+            background: white; padding: 14px; border-radius: 12px; font-weight: bold; 
+            border-left: 6px solid var(--primary); display: flex; flex-direction: column; 
+            gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; 
+        }
+        .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .header-title { font-size: 18px; display: flex; align-items: center; gap: 6px; }
         .header-tag { background: var(--primary); color: white; padding: 2px 6px; border-radius: 6px; font-size: 14px; }
         .header-phone { color: var(--primary); font-weight: 800; font-size: 15px; }
         
-        /* 歷史紀錄：改為右下角浮動按鈕 (FAB) */
-        .history-fab {
-            position: fixed; bottom: 35%; right: 20px; 
-            background: #1f2937; color: white; border: none; 
-            border-radius: 50px; padding: 12px 20px; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 90;
-            display: flex; align-items: center; gap: 8px; font-size: 15px;
+        /* 歷史紀錄：改回內嵌式長條按鈕，放在標題下方，絕對按得到 */
+        .history-btn-inline { 
+            width: 100%; background: #1f2937; color: white; border: none; 
+            border-radius: 8px; padding: 12px; font-weight: bold; font-size: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
             cursor: pointer; transition: 0.2s;
         }
-        @media (min-width: 768px) {
-            .history-fab { bottom: 30px; right: 440px; } /* iPad 版調整位置 */
-        }
-        .history-fab:active { transform: scale(0.9); }
+        .history-btn-inline:active { background: #374151; transform: scale(0.98); }
 
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 80px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 30px; }
         @media (min-width: 480px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
         
         .menu-btn { background: white; border: 3px solid transparent; border-radius: 14px; padding: 16px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
@@ -70,7 +70,7 @@
         .menu-name { font-size: 17px; font-weight: 900; margin-bottom: 4px; text-align: center; color: #1f2937;}
         .menu-price { font-size: 15px; font-weight: bold; color: #6b7280; }
 
-        .cart-header { background: #1f2937; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 17px; font-weight: bold; }
+        .cart-header { background: #1f2937; color: white; padding: 12px 16px; display: space-between; align-items: center; font-size: 17px; font-weight: bold; display: flex; }
         .clear-btn { background: #4b5563; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
         
         .cart-list { padding: 10px; margin: 0; display: flex; flex-direction: column; gap: 10px; background: #f9fafb; min-height: 100px; }
@@ -110,7 +110,7 @@
         /* --- 列印專用 --- */
         #print-area { display: none; }
         @media print {
-            .app-container, .modal-overlay, #update-banner, .history-fab { display: none !important; }
+            .app-container, .modal-overlay, #update-banner { display: none !important; }
             #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; color: black; }
             @page { margin: 0; }
         }
@@ -123,16 +123,17 @@
     <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2); border:1.5px solid white; color:white; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:14px;">✕ 關閉</button>
 </div>
 
-<!-- 歷史紀錄浮動按鈕 -->
-<button class="history-fab" onclick="openHistory()">📜 歷史紀錄</button>
-
 <div class="app-container">
     <div class="menu-section">
         <div class="header">
-            <div class="header-title">
-                <span class="header-tag">五結</span> 大腸麵線
+            <div class="header-top-row">
+                <div class="header-title">
+                    <span class="header-tag">五結</span> 大腸麵線
+                </div>
+                <div class="header-phone">03-9505237</div>
             </div>
-            <div class="header-phone">03-9505237</div>
+            <!-- 將歷史紀錄按鈕內嵌在這裡，向下移位避開劉海區 -->
+            <button class="history-btn-inline" onclick="openHistory()">📜 查看歷史訂單紀錄</button>
         </div>
         <div class="menu-grid" id="menu-grid"></div>
         <div class="version-tag">五結大腸麵線 POS | V <span id="current-v-text"></span></div>
@@ -309,7 +310,7 @@
             return `<div class="cart-item">
                     <div class="cart-item-main">
                         <div style="display:flex; flex-direction:column;"><strong style="font-size:18px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280;">單價$${unitPrice}</small></div>
-                        <div style="display:flex; align-items:center; gap:12px;"><strong style="color:var(--primary); font-size:18px;">$${subtotal}</strong><div class="qty-controls"><button class="qty-btn" onclick="changeQty(${index}, -1)">-</button><span style="width:34px; text-align:center; font-weight:bold;">${item.qty}</span><button class="qty-btn" onclick="changeQty(${index}, 1)">+</button></div></div>
+                        <div style="display:flex; align-items:center; gap:12px;"><strong style="color:var(--primary); font-size:18px;">$${subtotal}</strong><div class="qty-controls"><button class="qty-btn" onclick="changeQty(${index}, -1)">-</button><span style="width:34px; text-align:center; font-weight:bold; font-size:18px;">${item.qty}</span><button class="qty-btn" onclick="changeQty(${index}, 1)">+</button></div></div>
                     </div>
                     ${eggBtn}
                 </div>`;
@@ -357,7 +358,7 @@
             const area = document.getElementById('print-area');
             area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${order.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${order.change}<hr><center>謝謝光臨</center>`;
             window.print();
-        } else { await showMsg(`✅ 結帳完成！\n總計: $${total}\n收現: $${paid}\n找零: $${order.change}`); }
+        } else { await showMsg(`✅ 結帳成功！\n總計: $${total}\n收現: $${paid}\n找零: $${order.change}`); }
         cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; updateUI();
         if (window.innerWidth < 768) window.scrollTo({top: 0, behavior: 'smooth'});
     }
@@ -366,7 +367,7 @@
     function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
     function renderHistory() {
         const container = document.getElementById('history-list-container');
-        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#9ca3af; font-weight:bold;">尚無紀錄</div>'; return; }
+        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#9ca3af; font-weight:bold;">尚與紀錄</div>'; return; }
         container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item" onclick="toggleDetails(${o.id})"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; gap:6px;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:13px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button class="del-order-btn" onclick="askDeleteOrder(${idx}, event)"><svg style="width:16px;height:16px;fill:var(--red);" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> 刪除</button></div></div><div id="details-${o.id}" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #ddd; font-size:15px; color:#4b5563;">${o.items.map(i=>`<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.name} x${i.qty}</span><span>$${i.subtotal}</span></div>`).join('')}<div style="margin-top:10px; text-align:right; font-weight:900; border-top:1.5px solid #eee; padding-top:10px; color:var(--text);">收現:$${o.paid} &nbsp; 找零:$${o.change}</div></div></div>`).join('');
     }
     function toggleDetails(id) { const el = document.getElementById('details-' + id); if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
