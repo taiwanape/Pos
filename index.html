@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 版本號碼：1.2.1 (優化：僅煎類支援加蛋功能) -->
-    <meta name="app-version" content="1.2.1">
+    <!-- 版本號碼：1.2.2 (優化更新提示條，增加手動關閉按鈕) -->
+    <meta name="app-version" content="1.2.2">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
@@ -95,6 +95,15 @@
 
         .version-tag { text-align: center; font-size: 11px; color: #9ca3af; padding: 15px; }
 
+        /* 更新提示條優化 */
+        #update-banner { 
+            position: fixed; top: 0; left: 0; width: 100%; 
+            background: #1e40af; color: white; padding: 12px; 
+            text-align: center; font-weight: bold; z-index: 9999; 
+            display: none; box-shadow: 0 3px 15px rgba(0,0,0,0.3); font-size: 18px; 
+            justify-content: center; align-items: center; gap: 15px;
+        }
+
         /* --- 列印專用 --- */
         #print-area { display: none; }
         @media print {
@@ -106,7 +115,10 @@
 </head>
 <body>
 
-<div id="update-banner" onclick="window.location.reload(true)">✨ 發現新版本！點擊此處立即更新 ✨</div>
+<div id="update-banner">
+    <span onclick="window.location.reload(true)" style="cursor:pointer">✨ 發現新版本！點擊此處立即更新 ✨</span>
+    <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2); border:1.5px solid white; color:white; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:bold;">✕ 關閉</button>
+</div>
 
 <div class="app-container">
     <div class="menu-section">
@@ -213,13 +225,17 @@
         updateUI();
     }
 
+    // --- 改良版更新機制 ---
     async function checkUpdate() {
+        // 如果是在 AI 預覽環境或本地測試，不執行自動檢查，避免提示條卡住
+        if (window.location.hostname === '' || window.location.hostname.includes('goog') || window.location.protocol === 'blob:') return;
+
         try {
             const res = await fetch(location.href + (location.href.includes('?') ? '&' : '?') + 't=' + new Date().getTime(), { cache: 'no-store' });
             const text = await res.text();
             const match = text.match(/meta name="app-version" content="(.*?)"/);
             if (match && match[1] !== currentVersion) {
-                document.getElementById('update-banner').style.display = 'block';
+                document.getElementById('update-banner').style.display = 'flex';
             }
         } catch (e) {}
     }
@@ -305,7 +321,6 @@
             const subtotal = unitPrice * item.qty;
             total += subtotal;
             
-            // 判斷是否為煎類，決定是否顯示加蛋按鈕
             const eggButtonHtml = m.canAddEgg ? `
                 <div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="toggleEgg(${index})">
                     ${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}
