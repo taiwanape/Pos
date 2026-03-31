@@ -6,7 +6,7 @@
     <!-- 蘋果專用 PWA 標籤 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="斷網專用POS">
+    <meta name="apple-mobile-web-app-title" content="五結POS">
     <title>五結大腸麵線 斷網版POS</title>
     <style>
         :root {
@@ -281,37 +281,63 @@
 
 <script>
     // ----------------------------------------------------------------
-    // 終極斷網防護技術 (Service Worker)
+    // 自動更新與離線防護技術 (Service Worker V4)
     // ----------------------------------------------------------------
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
+            // 每次載入時強制檢查是否有新版本
             const swCode = `
-                const CACHE_NAME = 'wujie-pos-offline-v3';
+                const CACHE_NAME = 'wujie-pos-auto-update-' + new Date().getTime(); // 每次存檔更新快取名稱
                 self.addEventListener('install', event => {
+                    self.skipWaiting(); // 發現新版時直接取代舊版
                     event.waitUntil(
                         caches.open(CACHE_NAME).then(cache => {
                             return cache.addAll([ location.pathname ]);
-                        }).then(() => self.skipWaiting())
+                        })
                     );
                 });
                 self.addEventListener('activate', event => {
-                    event.waitUntil(self.clients.claim());
+                    // 清除舊的快取，節省空間並避免衝突
+                    event.waitUntil(
+                        caches.keys().then(keys => Promise.all(
+                            keys.map(key => { if(key !== CACHE_NAME) return caches.delete(key); })
+                        )).then(() => self.clients.claim())
+                    );
                 });
                 self.addEventListener('fetch', event => {
                     event.respondWith(
                         caches.match(event.request).then(response => {
                             return response || fetch(event.request);
-                        }).catch(() => {
-                            return caches.match(location.pathname);
                         })
                     );
                 });
             `;
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).then(() => {
+            
+            navigator.serviceWorker.register(swUrl).then(registration => {
                 document.getElementById('offline-tag').style.display = 'inline-block';
+                
+                // 定期檢查是否有更新
+                registration.onupdatefound = () => {
+                    const installingWorker = registration.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // 發現新版已安裝完成，自動重新整理頁面
+                            window.location.reload();
+                        }
+                    };
+                };
             });
+        });
+
+        // 當新的 Service Worker 接管時，自動刷新頁面
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
         });
     }
 
@@ -487,7 +513,6 @@
         if (orderHistory.length === 0) return;
         if(confirm('⚠️ 警告：確定要清空「所有」歷史訂單紀錄嗎？此動作無法復原！')) {
             orderHistory = [];
-            // orderCounter = 1; // 如果您想讓編號也歸零，可以把這行前面的雙斜線刪掉
             localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
             renderHistory();
         }
