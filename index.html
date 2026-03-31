@@ -13,12 +13,18 @@
             --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6;
             --text: #1f2937; --red: #ef4444; --green: #16a34a;
         }
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            /* 鎖死雙擊放大功能 (非常重要) */
+            touch-action: manipulation; 
+        }
         
         /* 基礎設定：手機預設可以自然上下滑動 */
         body, html {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
+            background-color: var(--bg); color: var(--text); 
+            /* 鎖死文字選取，避免長按反白 */
+            -webkit-user-select: none; user-select: none;
             /* 手機版允許自然滾動 */
             height: auto; overflow: visible;
         }
@@ -201,6 +207,15 @@
 </div>
 
 <script>
+    // --- 防止 iOS Safari 雙點擊放大與雙指縮放防護機制 ---
+    document.addEventListener('dblclick', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('gesturestart', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+
     const MENU = [
         { id: 1, name: '綜合煎', price: 85 }, { id: 2, name: '蚵仔煎', price: 75 },
         { id: 3, name: '蝦仔煎', price: 75 }, { id: 4, name: '蛋煎', price: 65 },
@@ -262,8 +277,7 @@
         updateUI(); 
         // 如果是手機版，點餐後輕微提示可以往下滑
         if (window.innerWidth < 768 && Object.keys(cart).length === 1 && cart[id] === 1) {
-            // 可選：自動滑動到結帳區 (如果您覺得不需要可以把這行刪掉)
-            // document.getElementById('cart-start').scrollIntoView({ behavior: 'smooth' });
+            // 可選：自動滑動到結帳區
         }
     }
     function removeFromCart(id) { if (!cart[id]) return; cart[id]--; if (cart[id] <= 0) delete cart[id]; updateUI(); }
