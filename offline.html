@@ -91,6 +91,24 @@
         .header-title { font-size: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
         .header-tag { background: var(--primary); color: white; padding: 2px 6px; border-radius: 6px; font-size: 16px; }
         
+        /* 歷史紀錄按鈕與彈出視窗樣式 */
+        .history-btn { margin-left: 8px; padding: 4px 10px; font-size: 14px; background: #4b5563; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .history-btn:active { background: #374151; transform: scale(0.95); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { padding: 16px; background: #f9fafb; border-bottom: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-header h2 { margin: 0; font-size: 20px; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+        .close-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #9ca3af; line-height: 1; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .close-btn:active { background: #e5e7eb; color: #4b5563; }
+        .history-list { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; background: #f3f4f6; }
+        .history-item { border: 2px solid #e5e7eb; border-radius: 12px; padding: 14px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .history-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .history-item-details { margin-top: 12px; padding-top: 12px; border-top: 2px dashed #e5e7eb; display: none; font-size: 15px; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .del-order-btn { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; border-radius: 6px; padding: 6px 12px; font-size: 14px; cursor: pointer; font-weight: bold; }
+        .del-order-btn:active { background: #fecaca; }
+        .clear-history-btn { font-size: 14px; color: #ef4444; background: none; border: none; cursor: pointer; font-weight: bold; padding: 4px; margin-right: 10px; }
+
         /* 離線狀態標籤設計 */
         .offline-status { font-size: 13px; background: var(--green); color: white; padding: 3px 8px; border-radius: 12px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
@@ -148,17 +166,43 @@
         .change-label { font-size: 18px; font-weight: bold; color: #4b5563; }
         .change-val { font-size: 32px; font-weight: 900; }
         
-        .submit-btn { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .submit-btn { padding: 18px; color: white; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .btn-primary { background: var(--primary); }
+        .btn-print { background: #4b5563; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* --- 列印專用樣式 (魔法排版區) --- */
+        #print-area { display: none; }
+        @media print {
+            /* 隱藏原本彩色的螢幕畫面 */
+            .app-container { display: none !important; }
+            /* 顯示純文字的收據畫面 */
+            #print-area { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 100%; 
+                /* 配合 58mm 或 80mm 出單紙寬度 */
+                max-width: 300px; 
+                font-family: "Courier New", Courier, monospace, "Microsoft JhengHei";
+                color: black;
+                background: white;
+                padding: 10px;
+            }
+            @page { margin: 0; } /* 清除邊距 */
+        }
     </style>
 </head>
 <body>
 
+<!-- 平板/手機看到的彩色畫面 -->
 <div class="app-container">
     <div class="menu-section">
         <div class="header">
             <div class="header-title">
                 <span class="header-tag">五結</span> 大腸麵線
+                <button class="history-btn" onclick="openHistory()">📜 歷史訂單</button>
                 <span id="offline-tag" class="offline-status">✓ 離線防護已啟用</span>
             </div>
             <div style="color: #6b7280;">03-9505237</div>
@@ -207,23 +251,45 @@
                 <button class="quick-btn btn-red" onclick="setQuickAmount('clear')">清除</button>
             </div>
             <div class="change-row"><span class="change-label">找零</span><span class="change-val" id="change-val">$0</span></div>
-            <button class="submit-btn" onclick="checkout()">完成結帳 (下一位)</button>
+            
+            <div class="action-btns">
+                <button class="submit-btn btn-primary" onclick="checkout(false)">純結帳</button>
+                <button class="submit-btn btn-print" onclick="checkout(true)">結帳並列印</button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- 歷史紀錄彈出視窗 -->
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📜 歷史訂單紀錄</h2>
+            <div style="display: flex; align-items: center;">
+                <button onclick="clearAllHistory()" class="clear-history-btn">清空所有</button>
+                <button onclick="closeHistory()" class="close-btn">×</button>
+            </div>
+        </div>
+        <div id="history-list-container" class="history-list">
+            <!-- 歷史訂單會顯示在這裡 -->
+        </div>
+    </div>
+</div>
+
+<!-- 只有在列印時才會出現的隱藏版收據畫面 -->
+<div id="print-area"></div>
+
 <script>
     // ----------------------------------------------------------------
-    // 終極斷網防護技術 (Service Worker) - 將整個網頁深度快取到平板內
+    // 終極斷網防護技術 (Service Worker)
     // ----------------------------------------------------------------
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             const swCode = `
-                const CACHE_NAME = 'wujie-pos-offline-v2';
+                const CACHE_NAME = 'wujie-pos-offline-v3';
                 self.addEventListener('install', event => {
                     event.waitUntil(
                         caches.open(CACHE_NAME).then(cache => {
-                            // 強制記憶當前網址的所有畫面與程式
                             return cache.addAll([ location.pathname ]);
                         }).then(() => self.skipWaiting())
                     );
@@ -234,7 +300,6 @@
                 self.addEventListener('fetch', event => {
                     event.respondWith(
                         caches.match(event.request).then(response => {
-                            // 有網路就抓最新的，沒網路或斷線就直接拿記憶體的！
                             return response || fetch(event.request);
                         }).catch(() => {
                             return caches.match(location.pathname);
@@ -242,12 +307,10 @@
                     );
                 });
             `;
-            // 將上面的防護程式塞入瀏覽器底層
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swUrl = URL.createObjectURL(blob);
             navigator.serviceWorker.register(swUrl).then(() => {
                 document.getElementById('offline-tag').style.display = 'inline-block';
-                console.log('✅ 終極斷網防護已啟動！');
             });
         });
     }
@@ -278,6 +341,10 @@
     const totalPriceEl = document.getElementById('total-price'); 
     const paidInput = document.getElementById('paid-input');
     const changeValEl = document.getElementById('change-val');
+
+    // 歷史紀錄資料 (從 localStorage 讀取，不怕關掉 App)
+    let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
+    let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
 
     function getTotal() {
         let total = 0;
@@ -320,10 +387,6 @@
     function addToCart(id) { 
         cart[id] = (cart[id] || 0) + 1; 
         updateUI(); 
-        // 如果是手機版，點餐後輕微提示可以往下滑
-        if (window.innerWidth < 768 && Object.keys(cart).length === 1 && cart[id] === 1) {
-            // 可選：自動滑動到結帳區
-        }
     }
     function removeFromCart(id) { if (!cart[id]) return; cart[id]--; if (cart[id] <= 0) delete cart[id]; updateUI(); }
     function clearAll(ask = false) {
@@ -337,15 +400,175 @@
         else paidAmount = type.toString();
         updateUI();
     }
-    function checkout() {
+    
+    // 產生並觸發列印收據
+    function printReceipt(total, paid, change) {
+        const printArea = document.getElementById('print-area');
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('zh-TW') + ' ' + now.toLocaleTimeString('zh-TW', {hour12: false});
+        
+        let html = `
+            <div style="text-align:center; font-size:24px; font-weight:bold; margin-bottom:5px;">五結大腸麵線</div>
+            <div style="text-align:center; font-size:14px; margin-bottom:15px;">電話: 03-9505237</div>
+            <div style="border-bottom: 2px dashed black; margin-bottom: 10px;"></div>
+            <table style="width:100%; text-align:left; font-size:16px; margin-bottom:10px; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding-bottom:5px;">品名</th>
+                        <th style="padding-bottom:5px; text-align:center;">數量</th>
+                        <th style="padding-bottom:5px; text-align:right;">小計</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        for (let id in cart) {
+            const item = MENU.find(m => m.id == id);
+            const subtotal = item.price * cart[id];
+            html += `
+                <tr>
+                    <td style="padding: 3px 0;">${item.name}</td>
+                    <td style="padding: 3px 0; text-align:center;">x${cart[id]}</td>
+                    <td style="padding: 3px 0; text-align:right;">$${subtotal}</td>
+                </tr>
+            `;
+        }
+        
+        html += `
+                </tbody>
+            </table>
+            <div style="border-bottom: 2px dashed black; margin-bottom: 10px;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:bold; margin-bottom:5px;">
+                <span>總計:</span>
+                <span>$${total}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:16px;">
+                <span>收現:</span>
+                <span>$${paid}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:16px;">
+                <span>找零:</span>
+                <span>$${change}</span>
+            </div>
+            <div style="border-bottom: 2px dashed black; margin-top: 10px; margin-bottom: 15px;"></div>
+            <div style="text-align:center; font-size:14px;">謝謝光臨，歡迎下次再來</div>
+            <div style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${dateStr}</div>
+        `;
+        
+        printArea.innerHTML = html;
+        window.print();
+    }
+
+    // 歷史訂單相關功能
+    function openHistory() {
+        renderHistory();
+        document.getElementById('history-modal').style.display = 'flex';
+    }
+
+    function closeHistory() {
+        document.getElementById('history-modal').style.display = 'none';
+    }
+
+    function toggleOrderDetails(id) {
+        const el = document.getElementById('details-' + id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function deleteOrder(index, event) {
+        event.stopPropagation(); // 防止點擊到展開按鈕
+        if(confirm('確定要刪除這筆訂單紀錄嗎？')) {
+            orderHistory.splice(index, 1);
+            localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
+            renderHistory();
+        }
+    }
+
+    function clearAllHistory() {
+        if (orderHistory.length === 0) return;
+        if(confirm('⚠️ 警告：確定要清空「所有」歷史訂單紀錄嗎？此動作無法復原！')) {
+            orderHistory = [];
+            // orderCounter = 1; // 如果您想讓編號也歸零，可以把這行前面的雙斜線刪掉
+            localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
+            renderHistory();
+        }
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('history-list-container');
+        if (orderHistory.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#9ca3af; padding:40px 0; font-size: 18px; font-weight:bold;">尚無任何訂單紀錄</div>';
+            return;
+        }
+        let html = '';
+        orderHistory.forEach((order, index) => {
+            let itemsHtml = order.items.map(item => 
+                `<div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="color:#374151; font-weight:bold;">${item.name} <span style="color:#2563eb;">x${item.qty}</span></span>
+                    <span style="color:#4b5563;">$${item.subtotal}</span>
+                </div>`
+            ).join('');
+            
+            html += `
+            <div class="history-item" onclick="toggleOrderDetails('${order.id}')">
+                <div class="history-item-header">
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:6px; font-size:14px;">#${String(order.id).padStart(3, '0')}</span>
+                        <span style="color:#6b7280; font-size:15px;">${order.time}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="color:var(--red); font-size:20px;">$${order.total}</span>
+                        <button class="del-order-btn" onclick="deleteOrder(${index}, event)">刪除</button>
+                    </div>
+                </div>
+                <div id="details-${order.id}" class="history-item-details">
+                    ${itemsHtml}
+                    <div style="border-top:2px dashed #e5e7eb; margin-top:10px; padding-top:10px; display:flex; justify-content:space-between; color:#6b7280; font-weight:bold;">
+                        <span>收現: $${order.paid}</span><span>找零: $${order.change}</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function checkout(shouldPrint) {
         const total = getTotal();
         if (total === 0) return alert('請先點餐喔！');
         const paid = parseInt(paidAmount);
         if (paidAmount !== '' && (isNaN(paid) || paid < total)) return alert('客人付的錢不夠喔！');
         const actualPaid = paidAmount === '' ? total : paid;
-        alert(`✅ 結帳成功！\n\n總計：$${total}\n收現：$${actualPaid}\n找零：$${actualPaid - total}`);
+        const change = actualPaid - total;
+        
+        // --- 儲存訂單紀錄 ---
+        const now = new Date();
+        const orderData = {
+            id: orderCounter,
+            time: now.toLocaleTimeString('zh-TW', {hour12: false}),
+            items: [],
+            total: total,
+            paid: actualPaid,
+            change: change
+        };
+        for (let id in cart) {
+            const item = MENU.find(m => m.id == id);
+            orderData.items.push({ name: item.name, qty: cart[id], subtotal: item.price * cart[id] });
+        }
+        orderHistory.unshift(orderData); // 將最新訂單排在清單最上面
+        orderCounter++;
+        
+        // 將紀錄存入設備本地記憶體
+        localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
+        localStorage.setItem('wujie_counter', orderCounter.toString());
+        // ---------------------
+        
+        if (shouldPrint) {
+            printReceipt(total, actualPaid, change);
+        } else {
+            alert(`✅ 結帳成功！\n\n總計：$${total}\n收現：$${actualPaid}\n找零：$${change}`);
+        }
+        
         cart = {}; paidAmount = ''; updateUI();
-        window.scrollTo({top: 0, behavior: 'smooth'}); // 結帳完自動捲回最上方
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 </script>
 </body>
