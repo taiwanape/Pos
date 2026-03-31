@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 版本號碼：1.2.0 (重大更新：加蛋功能改為品項內建、新增乾麵大/清麵線大小) -->
-    <meta name="app-version" content="1.2.0">
+    <!-- 版本號碼：1.2.1 (優化：僅煎類支援加蛋功能) -->
+    <meta name="app-version" content="1.2.1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
@@ -137,11 +137,11 @@
                 <input type="number" inputmode="numeric" id="paid-input" placeholder="客人付多少？" oninput="handlePaidInput(event)">
             </div>
             <div class="quick-btns">
-                <button class="quick-btn" style="background:#dcfce7; color:var(--green);" onclick="setQuickAmount('exact')">剛好</button>
-                <button class="quick-btn" style="background:#f3f4f6;" onclick="setQuickAmount(100)">100</button>
-                <button class="quick-btn" style="background:#f3f4f6;" onclick="setQuickAmount(500)">500</button>
-                <button class="quick-btn" style="background:#f3f4f6;" onclick="setQuickAmount(1000)">1000</button>
-                <button class="quick-btn" style="background:#fee2e2; color:var(--red);" onclick="setQuickAmount('clear')">重填</button>
+                <button class="quick-btn btn-green" style="background:#dcfce7; color:var(--green);" onclick="setQuickAmount('exact')">剛好</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(100)">100</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(500)">500</button>
+                <button class="quick-btn btn-gray" style="background:#f3f4f6;" onclick="setQuickAmount(1000)">1000</button>
+                <button class="quick-btn btn-red" style="background:#fee2e2; color:var(--red);" onclick="setQuickAmount('clear')">重填</button>
             </div>
             <div class="change-row">
                 <span style="font-weight:bold; color:#4b5563;">找零</span>
@@ -179,8 +179,10 @@
 
 <script>
     const MENU = [
-        { id: 1, name: '綜合煎', price: 85 }, { id: 2, name: '蚵仔煎', price: 75 },
-        { id: 3, name: '蝦仔煎', price: 75 }, { id: 4, name: '蛋煎', price: 65 },
+        { id: 1, name: '綜合煎', price: 85, canAddEgg: true }, 
+        { id: 2, name: '蚵仔煎', price: 75, canAddEgg: true },
+        { id: 3, name: '蝦仔煎', price: 75, canAddEgg: true }, 
+        { id: 4, name: '蛋煎', price: 65, canAddEgg: true },
         { id: 5, name: '大腸麵線(大)', price: 60 }, { id: 6, name: '大腸麵線(小)', price: 50 },
         { id: 20, name: '清麵線(大)', price: 55 }, { id: 21, name: '清麵線(小)', price: 45 },
         { id: 7, name: '臭豆腐', price: 55 }, { id: 8, name: '炸餛飩', price: 45 },
@@ -192,7 +194,6 @@
         { id: 18, name: '茶葉蛋', price: 15 }
     ];
 
-    // cart 現在是一個陣列，用來區分同品項但不同設定 (如加不加蛋)
     let cart = []; 
     let paidAmount = '';
     let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
@@ -244,9 +245,7 @@
         });
     }
 
-    // --- 購物車邏輯更新 ---
     function addToCart(id) {
-        // 點擊選單，預設加到「沒加蛋」的該品項
         const index = cart.findIndex(item => item.id === id && !item.hasEgg);
         if (index > -1) {
             cart[index].qty++;
@@ -264,10 +263,8 @@
 
     function toggleEgg(index) {
         const item = cart[index];
-        // 如果目前這行不只一個，我們只讓其中一個「分身」去加蛋
         if (item.qty > 1) {
             item.qty--;
-            // 尋找是否已有同品項且「已加蛋」的行
             const targetIdx = cart.findIndex(i => i.id === item.id && i.hasEgg === !item.hasEgg);
             if (targetIdx > -1) {
                 cart[targetIdx].qty++;
@@ -275,7 +272,6 @@
                 cart.push({ id: item.id, qty: 1, hasEgg: !item.hasEgg });
             }
         } else {
-            // 如果只有一個，直接翻轉狀態並嘗試合併
             item.hasEgg = !item.hasEgg;
             mergeCart();
         }
@@ -293,7 +289,6 @@
     }
     
     function updateUI() {
-        // 更新選單按鈕上的紅點總數
         MENU.forEach(m => {
             const btn = document.getElementById('btn-' + m.id);
             const badge = document.getElementById('badge-' + m.id);
@@ -309,6 +304,13 @@
             const unitPrice = item.hasEgg ? m.price + 10 : m.price;
             const subtotal = unitPrice * item.qty;
             total += subtotal;
+            
+            // 判斷是否為煎類，決定是否顯示加蛋按鈕
+            const eggButtonHtml = m.canAddEgg ? `
+                <div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="toggleEgg(${index})">
+                    ${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}
+                </div>
+            ` : '';
             
             return `
                 <div class="cart-item">
@@ -326,9 +328,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="toggleEgg(${index})">
-                        ${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}
-                    </div>
+                    ${eggButtonHtml}
                 </div>
             `;
         }).join('');
