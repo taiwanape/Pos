@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.3 (專為 iPad Air 2 深度優化，Icon 100% 相容編碼) -->
-    <meta name="app-version" content="1.3.3">
+    <!-- 版本號碼：1.3.4 (新增結帳資訊確認彈窗，修正按鈕文字，適配 iPad Air 2) -->
+    <meta name="app-version" content="1.3.4">
     
     <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
     
-    <!-- 改用 Base64 高相容性 App 圖示 (解決舊款 iPad 讀不到 SVG 問題) -->
+    <!-- Base64 高相容性 App 圖示 -->
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMjU2M2ViIi8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1mYW1pbHk9IkFyaWFsLUJvbGRNVCwgQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iODAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5LqU57WQPC90ZXh0Pjwvc3ZnPg==">
     <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMjU2M2ViIi8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1mYW1pbHk9IkFyaWFsLUJvbGRNVCwgQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iODAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5LqU57WQPC90ZXh0Pjwvc3ZnPg==">
 
@@ -24,20 +24,17 @@
         }
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         
-        /* 鎖定視窗高度，禁止瀏覽器上下拉動回彈 */
         html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
             width: 100%; height: 100%; overflow: hidden; position: fixed;
         }
 
-        /* --- 主容器佈局 --- */
         .app-container { 
             display: flex; flex-direction: column; width: 100%; height: 100dvh;
             padding-top: env(safe-area-inset-top);
         }
 
-        /* --- 選單區 --- */
         .menu-section { 
             display: flex; flex-direction: column; padding: 8px; flex: 1; overflow: hidden;
         }
@@ -46,7 +43,6 @@
             flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px;
         }
 
-        /* --- 數量選擇列 (iPad Air 2 橫向時關鍵：縮減間距) --- */
         .qty-selector-container {
             background: white; padding: 6px 10px; border-radius: 12px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
             display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-bottom: 2px;
@@ -59,34 +55,28 @@
         }
         .qty-num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* --- 購物車與結帳區 --- */
         .cart-section { 
             background: white; display: flex; flex-direction: column; 
             border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
             height: 45%; flex-shrink: 0;
         }
 
-        /* --- 平板適配 (iPad Air 2 專屬) --- */
+        /* iPad Air 2 適配 */
         @media (min-width: 768px) {
             .app-container { flex-direction: row; }
             .menu-section { flex: 1; height: 100%; border-right: 2px solid #d1d5db; padding: 10px; }
-            
-            /* 平板直向 */
             .cart-section { width: 320px; height: 100%; border-top: none; }
             .menu-grid { grid-template-columns: repeat(3, 1fr) !important; }
 
-            /* 平板橫向 (Landscape) */
             @media (orientation: landscape) {
                 .cart-section { width: 380px; }
                 .menu-grid { grid-template-columns: repeat(4, 1fr) !important; }
                 .menu-btn { min-height: 65px; padding: 10px 4px; }
                 .qty-num-btn { height: 36px; }
             }
-            
             .cart-list { flex: 1; overflow-y: auto; }
         }
 
-        /* --- 內部精細設計 --- */
         .header { background: white; padding: 8px 10px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; flex-shrink: 0; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .header-phone { color: var(--primary); font-weight: 800; font-size: 14px; }
@@ -111,7 +101,7 @@
         .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; }
         .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; }
         
-        .cart-item { background: white; padding: 8px; border-radius: 10px; border: 2px solid #e5e7eb; display: flex; flex-direction: column; gap: 4px; }
+        .cart-item { background: white; padding: 8px; border-radius: 10px; border: 2.5px solid #e5e7eb; display: flex; flex-direction: column; gap: 4px; }
         .cart-item.last-added { border-color: var(--primary); background: #f0f7ff; }
         
         .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 6px; border: 1px solid #d1d5db; overflow: hidden; }
@@ -148,6 +138,7 @@
 </div>
 
 <div class="app-container">
+    <!-- 左側選單 -->
     <div class="menu-section">
         <div class="header">
             <div class="header-top-row">
@@ -176,6 +167,7 @@
         <div style="text-align:center; font-size:9px; color:#9ca3af; padding-top:2px;">POS V <span id="current-v-text"></span></div>
     </div>
 
+    <!-- 右側結帳 -->
     <div class="cart-section">
         <div class="cart-header"><span>🛒 購物明細</span><button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:12px;">清空</button></div>
         <div class="cart-list" id="cart-list"></div>
@@ -198,7 +190,8 @@
             </div>
             <div class="change-row"><span style="font-weight:bold; color:#4b5563; font-size:14px;">找零</span><span class="change-val" id="change-val">$0</span></div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                <button class="submit-btn btn-print" onclick="checkout(true)">結帳+印</button>
+                <!-- 修正按鈕文字：將 印 改為 列印 -->
+                <button class="submit-btn btn-print" onclick="checkout(true)">結帳+列印</button>
                 <button class="submit-btn btn-pay" onclick="checkout(false)">結帳</button>
             </div>
         </div>
@@ -207,7 +200,7 @@
 
 <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div style="padding:14px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;"><h2 style="margin:0; font-size:16px;">📜 歷史訂單</h2><button onclick="closeHistory()" style="font-size:24px; border:none; background:none; color:#9ca3af;">×</button></div>
+        <div style="padding:14px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;"><h2 style="margin:0; font-size:18px;">📜 歷史訂單</h2><button onclick="closeHistory()" style="font-size:24px; border:none; background:none; color:#9ca3af;">×</button></div>
         <div id="history-list-container" style="padding:10px; overflow-y:auto; flex:1; background:#f3f4f6; display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 </div>
@@ -347,19 +340,29 @@
         const paid = parseInt(paidAmount) || total;
         if (paid < total) return showMsg('收現金額不足！');
 
-        const order = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: [], total, paid, change: paid - total };
+        const change = paid - total;
+        const order = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: [], total, paid, change };
+        
         cart.forEach(item => {
             const m = MENU.find(mi => mi.id === item.id);
             order.items.push({ name: item.hasEgg ? m.name + ' (+蛋)' : m.name, qty: item.qty, subtotal: (item.hasEgg ? m.price+10 : m.price) * item.qty });
         });
+
+        // 儲存歷史紀錄
         orderHistory.unshift(order);
         localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
         localStorage.setItem('wujie_counter', orderCounter);
+
         if (isPrint) {
             const area = document.getElementById('print-area');
-            area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${order.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${order.change}<hr><center>謝謝光臨</center>`;
+            area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${order.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${change}<hr><center>謝謝光臨</center>`;
             window.print();
         }
+
+        // --- 核心修改：結帳後跳出資訊確認彈窗，點擊「好的」才清空 ---
+        await showMsg(`✅ 結帳成功！\n\n總額：$${total}\n收現：$${paid}\n找零：$${change}`);
+
+        // 重置狀態
         cart = []; paidAmount = ''; lastSelectedIndex = -1; document.getElementById('paid-input').value = ''; updateUI();
     }
 
@@ -368,9 +371,13 @@
     function renderHistory() {
         const container = document.getElementById('history-list-container');
         if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#9ca3af;">尚無紀錄</div>'; return; }
-        container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item" style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd;"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:12px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button onclick="askDeleteOrder(${idx})" style="background:#fee2e2; border:none; color:var(--red); padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">🗑️</button></div></div></div>`).join('');
+        container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:12px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button onclick="askDeleteOrder(${idx})" style="background:#fee2e2; border:none; color:var(--red); padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">🗑️ 刪除</button></div></div></div>`).join('');
     }
-    async function askDeleteOrder(idx) { orderHistory.splice(idx, 1); localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); }
+    async function askDeleteOrder(idx) { 
+        if (await showMsg('確定要刪除這筆紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'刪除', color: 'var(--red)', val:true}])) {
+            orderHistory.splice(idx, 1); localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); 
+        }
+    }
     window.onload = initMenu;
 </script>
 </body>
