@@ -2,10 +2,11 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- 加入 user-scalable=no 並且鎖死 viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.6 (解除結帳金額限制，支援負數找零顯示) -->
-    <meta name="app-version" content="1.3.6">
+    <!-- 版本號碼：1.3.7 (鎖死 UI 雙擊/雙指縮放、新增購物車左滑刪除功能) -->
+    <meta name="app-version" content="1.3.7">
     
     <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,12 +23,17 @@
             --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6;
             --text: #1f2937; --red: #ef4444; --green: #16a34a; --egg: #f59e0b;
         }
+        
+        /* 鎖定所有的多點觸控和雙擊預設行為 */
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         
+        /* 鎖定視窗高度，禁止瀏覽器上下拉動回彈，並全面禁止手勢縮放 */
         html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
             width: 100%; height: 100%; overflow: hidden; position: fixed;
+            touch-action: none; /* 禁用原生的全域縮放與滾動 */
+            overscroll-behavior: none;
         }
 
         .app-container { 
@@ -39,8 +45,11 @@
             display: flex; flex-direction: column; padding: 8px; flex: 1; overflow: hidden;
         }
 
-        .menu-scroll-area {
+        /* 針對需要滾動的區域特別開啟垂直滾動權限 */
+        .menu-scroll-area, .cart-list, #history-list-container {
             flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px;
+            touch-action: pan-y; /* 只允許垂直滑動，防縮放與橫滑干擾 */
+            overscroll-behavior: contain;
         }
 
         .qty-selector-container {
@@ -74,7 +83,6 @@
                 .menu-btn { min-height: 65px; padding: 10px 4px; }
                 .qty-num-btn { height: 36px; }
             }
-            .cart-list { flex: 1; overflow-y: auto; }
         }
 
         .header { background: white; padding: 8px 10px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; flex-shrink: 0; }
@@ -97,10 +105,31 @@
         .menu-price { font-size: 13px; font-weight: bold; color: #6b7280; }
 
         .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; }
-        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; }
+        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; }
         
-        .cart-item { background: white; padding: 8px; border-radius: 10px; border: 2.5px solid #e5e7eb; display: flex; flex-direction: column; gap: 4px; }
-        .cart-item.last-added { border-color: var(--primary); background: #f0f7ff; }
+        /* --- 左滑刪除樣式設計 --- */
+        .cart-item-wrapper {
+            position: relative;
+            border-radius: 10px;
+            border: 2.5px solid #e5e7eb;
+            background: var(--red); /* 隱藏在後方的紅色背景 */
+            overflow: hidden;
+        }
+        .cart-item-wrapper.last-added { border-color: var(--primary); }
+        
+        .cart-item-delete-bg {
+            position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--red); color: white; font-weight: bold; cursor: pointer;
+            z-index: 1;
+        }
+        
+        .cart-item-content {
+            position: relative; background: white; padding: 8px; width: 100%; height: 100%;
+            z-index: 2; display: flex; flex-direction: column; gap: 4px;
+            transition: transform 0.2s ease-out; /* 滑動動畫 */
+        }
+        .cart-item-content.last-added { background: #f0f7ff; }
         
         .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 6px; border: 1px solid #d1d5db; overflow: hidden; }
         .qty-btn { background: white; border: none; width: 30px; height: 30px; font-size: 18px; font-weight: bold; color: #4b5563; }
@@ -117,7 +146,7 @@
         .change-row { background: #f3f4f6; padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border: 1px solid #e5e7eb; }
         .change-val { font-size: 26px; font-weight: 900; }
         
-        .submit-btn { padding: 14px; color: white; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .submit-btn { padding: 14px; color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-print { background: #4b5563; }
         .btn-pay { background: var(--primary); }
 
@@ -202,12 +231,12 @@
 <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div style="padding:14px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;"><h2 style="margin:0; font-size:18px;">📜 歷史訂單</h2><button onclick="closeHistory()" style="font-size:30px; border:none; background:none; color:#9ca3af;">×</button></div>
-        <div id="history-list-container" style="padding:10px; overflow-y:auto; flex:1; background:#f3f4f6; display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="history-list-container"></div>
     </div>
 </div>
 
 <div id="msg-box" class="modal-overlay">
-    <div class="modal-content">
+    <div class="msg-content">
         <div id="msg-box-text" style="white-space:pre-wrap;"></div>
         <div id="msg-box-btns" style="padding:20px; display:flex; gap:10px;"></div>
     </div>
@@ -216,6 +245,10 @@
 <div id="print-area"></div>
 
 <script>
+    // 徹底鎖死瀏覽器縮放與雙擊動作
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+    document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
+
     const MENU = [
         { id: 1, name: '綜合煎', price: 85, canAddEgg: true }, { id: 2, name: '蚵仔煎', price: 75, canAddEgg: true },
         { id: 3, name: '蝦仔煎', price: 75, canAddEgg: true }, { id: 4, name: '蛋煎', price: 65, canAddEgg: true },
@@ -230,6 +263,12 @@
     ];
 
     let cart = []; let paidAmount = ''; let lastSelectedIndex = -1;
+    
+    // 滑動刪除專用變數
+    let swipeStartX = 0;
+    let swipeCurrentX = 0;
+    let activeSwipeIndex = -1;
+
     let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
     let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
     const currentVersion = document.querySelector('meta[name="app-version"]').content;
@@ -280,7 +319,7 @@
 
     function changeQty(index, delta) {
         cart[index].qty += delta;
-        if (cart[index].qty <= 0) { cart.splice(index, 1); lastSelectedIndex = -1; }
+        if (cart[index].qty <= 0) { cart.splice(index, 1); lastSelectedIndex = -1; activeSwipeIndex = -1; }
         else { lastSelectedIndex = index; }
         updateUI();
     }
@@ -300,8 +339,77 @@
         }
         updateUI();
     }
+
+    // --- 左滑刪除核心邏輯 ---
+    function handleTouchStart(e, index) {
+        swipeStartX = e.touches[0].clientX;
+        swipeCurrentX = swipeStartX;
+    }
+
+    function handleTouchMove(e, index) {
+        if (!swipeStartX) return;
+        swipeCurrentX = e.touches[0].clientX;
+        let diff = swipeStartX - swipeCurrentX;
+        
+        if (diff > 0) { // 只能往左滑動
+            let el = document.getElementById(`cart-content-${index}`);
+            if (el) {
+                let translateX = Math.min(diff, 90); // 最多滑開90px
+                el.style.transform = `translateX(-${translateX}px)`;
+                el.style.transition = 'none';
+            }
+        }
+    }
+
+    function handleTouchEnd(e, index) {
+        if (!swipeStartX) return;
+        let diff = swipeStartX - swipeCurrentX;
+        let el = document.getElementById(`cart-content-${index}`);
+        
+        if (el) {
+            el.style.transition = 'transform 0.2s ease-out';
+            if (diff > 45) { // 滑動超過45px就判定展開
+                el.style.transform = `translateX(-80px)`;
+                if (activeSwipeIndex !== -1 && activeSwipeIndex !== index) {
+                    closeSwipe(activeSwipeIndex);
+                }
+                activeSwipeIndex = index;
+            } else { // 否則彈回
+                el.style.transform = `translateX(0px)`;
+                if (activeSwipeIndex === index) activeSwipeIndex = -1;
+            }
+        }
+        swipeStartX = 0;
+    }
+
+    function closeSwipe(index) {
+        let el = document.getElementById(`cart-content-${index}`);
+        if (el) el.style.transform = `translateX(0px)`;
+        activeSwipeIndex = -1;
+    }
+
+    function handleCartItemClick(e, index) {
+        if (activeSwipeIndex === index) {
+            closeSwipe(index);
+            return;
+        }
+        if (activeSwipeIndex !== -1) {
+            closeSwipe(activeSwipeIndex);
+        }
+        lastSelectedIndex = index;
+        updateUI();
+    }
+
+    function removeEntireItem(index) {
+        cart.splice(index, 1);
+        lastSelectedIndex = -1;
+        activeSwipeIndex = -1;
+        updateUI();
+    }
+    // ----------------------------
     
     function updateUI() {
+        activeSwipeIndex = -1; // 每次更新UI重置滑動狀態
         MENU.forEach(m => {
             const btn = document.getElementById('btn-' + m.id);
             const badge = btn.querySelector('.badge');
@@ -317,27 +425,33 @@
             const unitPrice = item.hasEgg ? m.price + 10 : m.price;
             total += unitPrice * item.qty;
             const isLast = index === lastSelectedIndex ? 'last-added' : '';
-            return `<div class="cart-item ${isLast}" onclick="lastSelectedIndex=${index}; updateUI()">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; flex-direction:column;"><strong style="font-size:16px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280;">$${unitPrice}</small></div>
-                        <div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--primary); font-size:16px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:30px; text-align:center; font-weight:bold;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
+            
+            return `
+                <div class="cart-item-wrapper ${isLast}">
+                    <div class="cart-item-delete-bg" onclick="removeEntireItem(${index})">
+                        <svg style="width:28px;height:28px;fill:white;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                     </div>
-                    ${m.canAddEgg ? `<div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="event.stopPropagation(); toggleEgg(${index})">${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}</div>` : ''}
-                </div>`;
+                    <div class="cart-item-content ${isLast}" id="cart-content-${index}" 
+                         onclick="handleCartItemClick(event, ${index})"
+                         ontouchstart="handleTouchStart(event, ${index})"
+                         ontouchmove="handleTouchMove(event, ${index})"
+                         ontouchend="handleTouchEnd(event, ${index})">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; flex-direction:column;"><strong style="font-size:16px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280;">$${unitPrice}</small></div>
+                            <div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--primary); font-size:16px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:30px; text-align:center; font-weight:bold;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
+                        </div>
+                        ${m.canAddEgg ? `<div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="event.stopPropagation(); toggleEgg(${index})">${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}</div>` : ''}
+                    </div>
+                </div>
+            `;
         }).join('') || '<div style="padding:30px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>';
         
         document.getElementById('total-price').innerText = '$' + total;
         const paid = parseInt(paidAmount) || 0;
         const cv = document.getElementById('change-val');
-        if (paidAmount === '') { 
-            cv.innerText = '$0'; 
-            cv.style.color = 'var(--text)'; 
-        } else {
-            const diff = paid - total;
-            cv.innerText = '$' + diff;
-            // 正數綠色，負數紅色
-            cv.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
-        }
+        if (paidAmount === '') { cv.innerText = '$0'; cv.style.color = 'var(--text)'; }
+        else if (paid >= total) { cv.innerText = '$' + (paid - total); cv.style.color = 'var(--green)'; }
+        else { cv.innerText = '不足'; cv.style.color = 'var(--red)'; }
     }
 
     function handlePaidInput(e) { paidAmount = e.target.value; updateUI(); }
@@ -346,13 +460,12 @@
         paidAmount = (val === 'exact') ? totalText : (val === 'clear' ? '' : val.toString());
         document.getElementById('paid-input').value = paidAmount; updateUI();
     }
-    async function askClearCart() { if (cart.length === 0) return; if (await showMsg('確定要清空點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) { cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; updateUI(); } }
+    async function askClearCart() { if (cart.length === 0) return; if (await showMsg('確定要清空點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) { cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI(); } }
 
     async function checkout(isPrint) {
         const total = parseInt(document.getElementById('total-price').innerText.replace('$',''));
         if (total === 0) return;
         
-        // 修正點：移除金額不足警告，允許結帳
         const paid = parseInt(paidAmount) || total;
         const change = paid - total;
         
@@ -373,12 +486,11 @@
             window.print();
         }
 
-        // 修正點：彈窗同步顯示負數找零
         const changeColor = change >= 0 ? 'var(--green)' : 'var(--red)';
         const msg = `✅ 結帳成功！\n\n<span style="font-size:20px; color:#6b7280;">總計金額：$${total}</span>\n<span style="font-size:20px; color:#6b7280;">客人付現：$${paid}</span>\n<hr style="border:none; border-top:2px dashed #ddd; margin:15px 0;">找零金額：<span style="color:${changeColor}; font-size:48px; display:block;">$${change}</span>`;
         await showMsg(msg);
 
-        cart = []; paidAmount = ''; lastSelectedIndex = -1; document.getElementById('paid-input').value = ''; updateUI();
+        cart = []; paidAmount = ''; lastSelectedIndex = -1; activeSwipeIndex = -1; document.getElementById('paid-input').value = ''; updateUI();
     }
 
     function openHistory() { renderHistory(); document.getElementById('history-modal').style.display = 'flex'; }
