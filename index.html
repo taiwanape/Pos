@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 版本號碼：1.2.8 (修復 1.2.7 的報錯問題，找回找零顯示與快速金額鈕) -->
-    <meta name="app-version" content="1.2.8">
+    <!-- 版本號碼：1.2.9 (極致優化 iPad Air 2 橫/直向滿版，支援全系列 iPhone) -->
+    <meta name="app-version" content="1.2.9">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
@@ -16,83 +16,105 @@
         }
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         
-        body, html {
+        /* 鎖死全螢幕，防止整體滑動 */
+        html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
-            width: 100%; height: 100dvh; overflow: hidden; 
+            width: 100%; height: 100%; overflow: hidden; position: fixed;
         }
 
-        /* --- 核心排版結構 --- */
-        .app-container { display: flex; flex-direction: column; width: 100%; height: 100dvh; padding-top: env(safe-area-inset-top); }
-        .menu-section { padding: 10px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .menu-scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px; }
+        /* --- 主容器：自動適應全系列裝置 --- */
+        .app-container { 
+            display: flex; flex-direction: column; width: 100%; height: 100dvh;
+            padding-top: env(safe-area-inset-top);
+        }
 
-        /* 數量選擇列樣式 */
+        /* --- 菜單區 (左側/上方) --- */
+        .menu-section { 
+            display: flex; flex-direction: column; padding: 10px; flex: 1; overflow: hidden;
+        }
+
+        .menu-scroll-area {
+            flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px;
+        }
+
+        /* --- 數量選擇列 (固定在菜單下方) --- */
         .qty-selector-container {
-            background: white; padding: 12px; border-radius: 16px; box-shadow: 0 -4px 10px rgba(0,0,0,0.08);
-            display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-bottom: env(safe-area-inset-bottom);
+            background: white; padding: 10px; border-radius: 12px; box-shadow: 0 -3px 10px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-bottom: 5px;
         }
-        .qty-btns { display: flex; flex: 1; gap: 6px; }
+        .qty-btns { display: flex; flex: 1; gap: 4px; }
         .qty-num-btn {
-            flex: 1; height: 46px; border: 2px solid #e5e7eb; border-radius: 10px;
-            background: white; font-size: 20px; font-weight: bold; color: var(--text);
+            flex: 1; height: 42px; border: 1.5px solid #e5e7eb; border-radius: 8px;
+            background: white; font-size: 18px; font-weight: bold; color: var(--text);
             display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .qty-num-btn:active { background: #f3f4f6; }
+        .qty-num-btn:active { background: #f3f4f6; transform: scale(0.95); }
 
-        /* 結帳區 */
-        .cart-section { background: white; display: flex; flex-direction: column; border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); max-height: 50%; }
-
-        @media (min-width: 768px) {
-            .app-container { flex-direction: row; height: 100dvh; padding-top: 0; }
-            .menu-section { flex: 1; height: 100%; border-right: 2px solid #d1d5db; padding: 16px; }
-            .cart-section { width: 420px; height: 100%; border-top: none; max-height: 100%; }
-            .qty-selector-container { margin-bottom: 0; padding: 16px; }
+        /* --- 結帳區 (右側/下方) --- */
+        .cart-section { 
+            background: white; display: flex; flex-direction: column; 
+            border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            height: 45%; flex-shrink: 0;
         }
 
-        /* --- 元件設計 --- */
-        .header { background: white; padding: 12px 14px; border-radius: 12px; font-weight: bold; border-left: 6px solid var(--primary); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 12px; flex-shrink: 0; }
+        /* --- iPad 以上大螢幕排版 (含 iPad Air 2 橫/直) --- */
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; }
+            .menu-section { flex: 1; height: 100%; border-right: 2px solid #d1d5db; padding: 15px; }
+            .cart-section { width: 350px; height: 100%; border-top: none; }
+            
+            /* 在橫向大螢幕下增加寬度 */
+            @media (orientation: landscape) { .cart-section { width: 400px; } }
+
+            .menu-grid { grid-template-columns: repeat(4, 1fr) !important; }
+            .cart-list { flex: 1; overflow-y: auto; }
+        }
+
+        /* --- 內部細節 --- */
+        .header { background: white; padding: 10px 12px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px; flex-shrink: 0; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .header-phone { color: var(--primary); font-weight: 800; font-size: 15px; }
-        .history-btn-inline { width: 100%; background: #1f2937; color: white; border: none; border-radius: 8px; padding: 10px; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .header-phone { color: var(--primary); font-weight: 800; font-size: 14px; }
+        .history-btn-inline { width: 100%; background: #374151; color: white; border: none; border-radius: 6px; padding: 8px; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
-        
-        .menu-btn { background: white; border: 3px solid transparent; border-radius: 14px; padding: 14px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .menu-btn { background: white; border: 2px solid transparent; border-radius: 12px; padding: 14px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
         .menu-btn.active { background: var(--primary-light); border-color: var(--primary); }
-        .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; width: 24px; height: 24px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
         .menu-btn.active .badge { display: flex; }
-        .menu-name { font-size: 16px; font-weight: 900; margin-bottom: 2px; text-align: center; }
+        .menu-name { font-size: 15px; font-weight: 900; margin-bottom: 2px; text-align: center; }
+        .menu-price { font-size: 13px; font-weight: bold; color: #6b7280; }
 
-        .cart-header { background: #1f2937; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold; flex-shrink: 0; }
-        .cart-list { padding: 10px; margin: 0; display: flex; flex-direction: column; gap: 8px; background: #f9fafb; min-height: 80px; overflow-y: auto; flex: 1; }
+        .cart-header { background: #1f2937; color: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; }
+        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; }
         
-        .cart-item { background: white; padding: 10px; border-radius: 12px; border: 2px solid #e5e7eb; display: flex; flex-direction: column; gap: 6px; transition: 0.2s; }
-        .cart-item.last-added { border-color: var(--primary); background: #f0f7ff; box-shadow: 0 0 10px rgba(37, 99, 235, 0.1); }
-        
+        .cart-item { background: white; padding: 10px; border-radius: 10px; border: 2px solid #e5e7eb; display: flex; flex-direction: column; gap: 5px; transition: 0.1s; }
+        .cart-item.last-added { border-color: var(--primary); background: #f0f7ff; }
         .cart-item-main { display: flex; justify-content: space-between; align-items: center; }
-        .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 8px; border: 1px solid #d1d5db; overflow: hidden; }
-        .qty-btn { background: white; border: none; width: 34px; height: 34px; font-size: 18px; font-weight: bold; color: #4b5563; }
         
-        .addon-toggle { display: flex; align-items: center; gap: 6px; background: #fffbeb; border: 1.5px solid var(--egg); color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; width: fit-content; }
+        .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 6px; border: 1px solid #d1d5db; overflow: hidden; }
+        .qty-btn { background: white; border: none; width: 32px; height: 32px; font-size: 18px; font-weight: bold; color: #4b5563; }
+        
+        .addon-toggle { display: flex; align-items: center; gap: 5px; background: #fffbeb; border: 1.2px solid var(--egg); color: #92400e; padding: 4px 8px; border-radius: 15px; font-size: 12px; font-weight: bold; cursor: pointer; width: fit-content; }
         .addon-toggle.active { background: var(--egg); color: white; border-color: #d97706; }
 
-        .checkout-panel { padding: 14px; border-top: 2px solid #e5e7eb; background: white; flex-shrink: 0; }
-        .total-price { font-size: 40px; font-weight: 900; color: var(--red); line-height: 1; }
-        .input-wrapper input { width: 100%; padding: 12px 12px 12px 40px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 22px; font-weight: bold; text-align: right; }
+        .checkout-panel { padding: 12px; border-top: 2px solid #e5e7eb; background: white; flex-shrink: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        .total-price { font-size: 36px; font-weight: 900; color: var(--red); line-height: 1; }
+        .input-wrapper input { width: 100%; padding: 10px 10px 10px 35px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 20px; font-weight: bold; text-align: right; }
+        .quick-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 8px 0; }
+        .quick-btn { padding: 8px 0; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         
-        .quick-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
-        .quick-btn { padding: 10px 0; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
-        .change-row { background: #f3f4f6; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border: 1px solid #e5e7eb; }
-        .change-val { font-size: 28px; font-weight: 900; }
+        .change-row { background: #f3f4f6; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1px solid #e5e7eb; }
+        .change-val { font-size: 24px; font-weight: 900; }
         
-        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .submit-btn { padding: 16px; color: white; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .submit-btn { padding: 14px; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 85dvh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
-        #update-banner { position: fixed; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; justify-content: center; align-items: center; gap: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 80dvh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+        .del-order-btn { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; white-space: nowrap; }
+
+        #update-banner { position: fixed; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 3px 15px rgba(0,0,0,0.3); font-size: 16px; justify-content: center; align-items: center; gap: 10px; }
         #print-area { display: none; }
         @media print { .app-container, .modal-overlay, #update-banner { display: none !important; } #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; color: black; } @page { margin: 0; } }
     </style>
@@ -101,25 +123,28 @@
 
 <div id="update-banner">
     <span onclick="window.location.reload(true)" style="cursor:pointer">✨ 發現新版本！點擊此處立即更新 ✨</span>
-    <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2); border:1.5px solid white; color:white; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:14px;">✕ 關閉</button>
+    <button onclick="document.getElementById('update-banner').style.display='none'" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:12px;">✕</button>
 </div>
 
 <div class="app-container">
+    <!-- 左/上：菜單與功能 -->
     <div class="menu-section">
         <div class="header">
             <div class="header-top-row">
-                <div style="font-size:18px;"><span style="background:var(--primary); color:white; padding:2px 6px; border-radius:6px; font-size:14px;">五結</span> 大腸麵線</div>
+                <div style="font-size:17px;"><span style="background:var(--primary); color:white; padding:2px 6px; border-radius:6px; font-size:13px;">五結</span> 大腸麵線</div>
                 <div class="header-phone">03-9505237</div>
             </div>
-            <button class="history-btn-inline" onclick="openHistory()">📜 查看歷史訂單紀錄</button>
+            <button class="history-btn-inline" onclick="openHistory()">📜 歷史訂單紀錄</button>
         </div>
 
-        <div class="menu-scroll-area"><div class="menu-grid" id="menu-grid"></div></div>
+        <div class="menu-scroll-area">
+            <div class="menu-grid" id="menu-grid"></div>
+        </div>
 
-        <!-- 快速數量選擇列 -->
+        <!-- 快速數量 -->
         <div class="qty-selector-container">
-            <div style="font-weight:900; color:#6b7280; font-size:14px;">修改數量:</div>
-            <div class="qty-btns" id="qty-selector-btns">
+            <div style="font-weight:900; color:#6b7280; font-size:12px; white-space:nowrap;">改數:</div>
+            <div class="qty-btns">
                 <button class="qty-num-btn" onclick="applyQuickQty(1)">1</button>
                 <button class="qty-num-btn" onclick="applyQuickQty(2)">2</button>
                 <button class="qty-num-btn" onclick="applyQuickQty(3)">3</button>
@@ -131,17 +156,28 @@
                 <button class="qty-num-btn" onclick="applyQuickQty(9)">9</button>
             </div>
         </div>
-        <div style="text-align:center; font-size:10px; color:#9ca3af; padding:5px;">V <span id="current-v-text"></span></div>
+        <div style="text-align:center; font-size:9px; color:#9ca3af; padding-top:2px;">V <span id="current-v-text"></span></div>
     </div>
 
+    <!-- 右/下：購物車與結帳 -->
     <div class="cart-section">
-        <div class="cart-header"><span>🛒 購物明細</span><button class="clear-btn" onclick="askClearCart()">清空</button></div>
+        <div class="cart-header">
+            <span>🛒 購物明細</span>
+            <button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 10px; border-radius:4px; font-size:12px;">清空</button>
+        </div>
         <div class="cart-list" id="cart-list"></div>
+        
         <div class="checkout-panel">
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px;"><span style="font-weight:bold; color:#6b7280;">總額</span><span class="total-price" id="total-price">$0</span></div>
-            <div class="input-wrapper" style="position:relative;"><span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:24px;">$</span><input type="number" inputmode="numeric" id="paid-input" placeholder="收現" oninput="handlePaidInput(event)"></div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+                <span style="font-weight:bold; color:#6b7280; font-size:14px;">總額</span>
+                <span class="total-price" id="total-price">$0</span>
+            </div>
             
-            <!-- 快速金額按鈕 -->
+            <div class="input-wrapper" style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:18px;">$</span>
+                <input type="number" inputmode="numeric" id="paid-input" placeholder="收現金額" oninput="handlePaidInput(event)">
+            </div>
+            
             <div class="quick-btns">
                 <button class="quick-btn" style="background:#dcfce7; color:var(--green);" onclick="setQuickAmount('exact')">剛好</button>
                 <button class="quick-btn" style="background:#f3f4f6;" onclick="setQuickAmount(100)">100</button>
@@ -150,24 +186,24 @@
                 <button class="quick-btn" style="background:#fee2e2; color:var(--red);" onclick="setQuickAmount('clear')">重填</button>
             </div>
 
-            <!-- 找零顯示區 (修復報錯點) -->
             <div class="change-row">
-                <span style="font-weight:bold; color:#4b5563; font-size:16px;">找零</span>
+                <span style="font-weight:bold; color:#4b5563; font-size:14px;">找零</span>
                 <span class="change-val" id="change-val">$0</span>
             </div>
 
             <div class="action-btns">
-                <button class="submit-btn" style="background:#4b5563;" onclick="checkout(true)">結帳+列印</button>
-                <button class="submit-btn" style="background:var(--primary);" onclick="checkout(false)">完成結帳</button>
+                <button class="submit-btn" style="background:#4b5563;" onclick="checkout(true)">結帳+印單</button>
+                <button class="submit-btn" style="background:var(--primary);" onclick="checkout(false)">結帳</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- 彈窗區 -->
 <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div style="padding:16px; border-bottom:2px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;"><h2 style="margin:0; font-size:18px;">📜 歷史訂單</h2><button onclick="closeHistory()" style="font-size:30px; border:none; background:none; color:#9ca3af; line-height:1;">×</button></div>
-        <div id="history-list-container" class="history-list"></div>
+        <div style="padding:14px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#f9fafb;"><h2 style="margin:0; font-size:16px;">📜 歷史訂單</h2><button onclick="closeHistory()" style="font-size:24px; border:none; background:none; color:#9ca3af;">×</button></div>
+        <div id="history-list-container" style="padding:10px; overflow-y:auto; flex:1; background:#f3f4f6; display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 </div>
 <div id="msg-box" class="modal-overlay"><div class="msg-content"><div id="msg-box-text" class="msg-text"></div><div id="msg-box-btns" class="msg-btns"></div></div></div>
@@ -187,8 +223,7 @@
         { id: 16, name: '餛飩湯', price: 45 }, { id: 17, name: '一串心', price: 20 }, { id: 18, name: '茶葉蛋', price: 15 }
     ];
 
-    let cart = []; let paidAmount = '';
-    let lastSelectedIndex = -1;
+    let cart = []; let paidAmount = ''; let lastSelectedIndex = -1;
     let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
     let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
     const currentVersion = document.querySelector('meta[name="app-version"]').content;
@@ -206,28 +241,21 @@
             const res = await fetch(location.href + (location.href.includes('?') ? '&' : '?') + 't=' + new Date().getTime(), { cache: 'no-store' });
             const text = await res.text();
             const match = text.match(/meta name="app-version" content="(.*?)"/);
-            if (match && match[1] !== currentVersion) {
-                document.getElementById('update-banner').style.display = 'flex';
-            }
+            if (match && match[1] !== currentVersion) { document.getElementById('update-banner').style.display = 'flex'; }
         } catch (e) {}
     }
-    setInterval(checkUpdate, 60000); 
+    setInterval(checkUpdate, 60000);
 
     function showMsg(text, options = []) {
         return new Promise((resolve) => {
             const box = document.getElementById('msg-box');
             const txt = document.getElementById('msg-box-text');
             const btns = document.getElementById('msg-box-btns');
-            txt.innerText = text;
-            btns.innerHTML = '';
+            txt.innerText = text; btns.innerHTML = '';
             if (options.length === 0) options = [{ label: '好的', color: 'var(--primary)', val: true }];
             options.forEach(opt => {
-                const b = document.createElement('button');
-                b.className = 'msg-btn';
-                b.innerText = opt.label;
-                b.style.backgroundColor = opt.color;
-                b.onclick = () => { box.style.display = 'none'; resolve(opt.val); };
-                btns.appendChild(b);
+                const b = document.createElement('button'); b.className = 'msg-btn'; b.innerText = opt.label; b.style.backgroundColor = opt.color;
+                b.onclick = () => { box.style.display = 'none'; resolve(opt.val); }; btns.appendChild(b);
             });
             box.style.display = 'flex';
         });
@@ -235,31 +263,19 @@
 
     function addToCart(id) {
         const index = cart.findIndex(item => item.id === id && !item.hasEgg);
-        if (index > -1) {
-            cart[index].qty++;
-            lastSelectedIndex = index;
-        } else {
-            cart.push({ id, qty: 1, hasEgg: false });
-            lastSelectedIndex = cart.length - 1;
-        }
+        if (index > -1) { cart[index].qty++; lastSelectedIndex = index; }
+        else { cart.push({ id, qty: 1, hasEgg: false }); lastSelectedIndex = cart.length - 1; }
         updateUI();
     }
 
     function applyQuickQty(n) {
-        if (lastSelectedIndex > -1 && cart[lastSelectedIndex]) {
-            cart[lastSelectedIndex].qty = n;
-            updateUI();
-        }
+        if (lastSelectedIndex > -1 && cart[lastSelectedIndex]) { cart[lastSelectedIndex].qty = n; updateUI(); }
     }
 
     function changeQty(index, delta) {
         cart[index].qty += delta;
-        if (cart[index].qty <= 0) {
-            cart.splice(index, 1);
-            lastSelectedIndex = -1;
-        } else {
-            lastSelectedIndex = index;
-        }
+        if (cart[index].qty <= 0) { cart.splice(index, 1); lastSelectedIndex = -1; }
+        else { lastSelectedIndex = index; }
         updateUI();
     }
 
@@ -296,49 +312,34 @@
             const isLast = index === lastSelectedIndex ? 'last-added' : '';
             return `<div class="cart-item ${isLast}" onclick="lastSelectedIndex=${index}; updateUI()">
                     <div class="cart-item-main">
-                        <div style="display:flex; flex-direction:column;"><strong style="font-size:17px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280;">$${unitPrice}</small></div>
-                        <div style="display:flex; align-items:center; gap:12px;"><strong style="color:var(--primary); font-size:18px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:30px; text-align:center; font-weight:bold;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
+                        <div style="display:flex; flex-direction:column;"><strong style="font-size:16px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280;">$${unitPrice}</small></div>
+                        <div style="display:flex; align-items:center; gap:10px;"><strong style="color:var(--primary); font-size:17px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:28px; text-align:center; font-weight:bold;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
                     </div>
                     ${m.canAddEgg ? `<div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="event.stopPropagation(); toggleEgg(${index})">${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}</div>` : ''}
                 </div>`;
-        }).join('') || '<div style="padding:40px; text-align:center; color:#9ca3af; font-weight:bold;">請選餐點...</div>';
+        }).join('') || '<div style="padding:30px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>';
         
         document.getElementById('total-price').innerText = '$' + total;
         const paid = parseInt(paidAmount) || 0;
         const cv = document.getElementById('change-val');
-        if (paidAmount === '') {
-            cv.innerText = '$0';
-            cv.style.color = 'var(--text)';
-        } else if (paid >= total) {
-            cv.innerText = '$' + (paid - total);
-            cv.style.color = 'var(--green)';
-        } else {
-            cv.innerText = '不足';
-            cv.style.color = 'var(--red)';
-        }
+        if (paidAmount === '') { cv.innerText = '$0'; cv.style.color = 'var(--text)'; }
+        else if (paid >= total) { cv.innerText = '$' + (paid - total); cv.style.color = 'var(--green)'; }
+        else { cv.innerText = '不足'; cv.style.color = 'var(--red)'; }
     }
 
     function handlePaidInput(e) { paidAmount = e.target.value; updateUI(); }
     function setQuickAmount(val) {
         const total = document.getElementById('total-price').innerText.replace('$','');
         paidAmount = (val === 'exact') ? total : (val === 'clear' ? '' : val.toString());
-        document.getElementById('paid-input').value = paidAmount;
-        updateUI();
+        document.getElementById('paid-input').value = paidAmount; updateUI();
     }
-
-    async function askClearCart() {
-        if (cart.length === 0) return;
-        if (await showMsg('確定要清空目前的點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) {
-            cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; updateUI();
-        }
-    }
+    async function askClearCart() { if (cart.length === 0) return; if (await showMsg('確定要清空點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) { cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; updateUI(); } }
 
     async function checkout(isPrint) {
-        const totalText = document.getElementById('total-price').innerText.replace('$','');
-        const total = parseInt(totalText);
+        const total = parseInt(document.getElementById('total-price').innerText.replace('$',''));
         if (total === 0) return;
         const paid = parseInt(paidAmount) || total;
-        if (paid < total) return showMsg('客人付的錢不夠喔！');
+        if (paid < total) return showMsg('收現金額不足！');
 
         const order = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: [], total, paid, change: paid - total };
         cart.forEach(item => {
@@ -360,8 +361,8 @@
     function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
     function renderHistory() {
         const container = document.getElementById('history-list-container');
-        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#9ca3af;">尚無紀錄</div>'; return; }
-        container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:13px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button class="del-order-btn" onclick="askDeleteOrder(${idx})">🗑️</button></div></div></div>`).join('');
+        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#9ca3af;">尚無紀錄</div>'; return; }
+        container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:12px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button class="del-order-btn" onclick="askDeleteOrder(${idx})">🗑️ 刪除</button></div></div></div>`).join('');
     }
     async function askDeleteOrder(idx) { orderHistory.splice(idx, 1); localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); }
     window.onload = initMenu;
