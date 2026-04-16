@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.8 (修復結帳視窗變透明的問題，補回白色實心背景) -->
-    <meta name="app-version" content="1.3.8">
+    <!-- 版本號碼：1.3.9 (新增歷史訂單「載入並重新編輯」功能) -->
+    <meta name="app-version" content="1.3.9">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -102,8 +102,8 @@
         .menu-name { font-size: 16px; font-weight: 900; margin-bottom: 2px; text-align: center; line-height: 1.2; color: #1f2937; }
         .menu-price { font-size: 13px; font-weight: bold; color: #6b7280; }
 
-        .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; }
-        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; }
+        .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; transition: background 0.3s; }
+        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; }
         
         /* 左滑刪除樣式設計 */
         .cart-item-wrapper {
@@ -148,7 +148,7 @@
         .btn-print { background: #4b5563; }
         .btn-pay { background: var(--primary); }
 
-        /* 彈窗對比強化 (補回了丟失的 msg-content 白色背景) */
+        /* 彈窗對比強化 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 15px; }
         
         .modal-content { background: white !important; width: 100%; max-width: 500px; max-height: 85dvh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 4px solid #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
@@ -199,7 +199,11 @@
     </div>
 
     <div class="cart-section">
-        <div class="cart-header"><span>🛒 購物明細</span><button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:12px;">清空</button></div>
+        <!-- 頂部會隨編輯狀態改變顏色與按鈕 -->
+        <div class="cart-header" id="cart-header">
+            <span>🛒 購物明細</span>
+            <button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:12px;">清空</button>
+        </div>
         <div class="cart-list" id="cart-list"></div>
         
         <div class="checkout-panel">
@@ -262,6 +266,9 @@
 
     let cart = []; let paidAmount = ''; let lastSelectedIndex = -1;
     let swipeStartX = 0; let swipeCurrentX = 0; let activeSwipeIndex = -1;
+    
+    // 全域變數：追蹤當前是否正在編輯歷史訂單
+    let editingOrderId = null;
 
     let orderHistory = JSON.parse(localStorage.getItem('wujie_orders')) || [];
     let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
@@ -334,36 +341,26 @@
         updateUI();
     }
 
-    function handleTouchStart(e, index) {
-        swipeStartX = e.touches[0].clientX;
-        swipeCurrentX = swipeStartX;
-    }
-
+    // 左滑刪除邏輯
+    function handleTouchStart(e, index) { swipeStartX = e.touches[0].clientX; swipeCurrentX = swipeStartX; }
     function handleTouchMove(e, index) {
         if (!swipeStartX) return;
         swipeCurrentX = e.touches[0].clientX;
         let diff = swipeStartX - swipeCurrentX;
-        
         if (diff > 0) { 
             let el = document.getElementById(`cart-content-${index}`);
-            if (el) {
-                let translateX = Math.min(diff, 90); 
-                el.style.transform = `translateX(-${translateX}px)`;
-                el.style.transition = 'none';
-            }
+            if (el) { el.style.transform = `translateX(-${Math.min(diff, 90)}px)`; el.style.transition = 'none'; }
         }
     }
-
     function handleTouchEnd(e, index) {
         if (!swipeStartX) return;
         let diff = swipeStartX - swipeCurrentX;
         let el = document.getElementById(`cart-content-${index}`);
-        
         if (el) {
             el.style.transition = 'transform 0.2s ease-out';
             if (diff > 45) { 
                 el.style.transform = `translateX(-80px)`;
-                if (activeSwipeIndex !== -1 && activeSwipeIndex !== index) { closeSwipe(activeSwipeIndex); }
+                if (activeSwipeIndex !== -1 && activeSwipeIndex !== index) closeSwipe(activeSwipeIndex);
                 activeSwipeIndex = index;
             } else { 
                 el.style.transform = `translateX(0px)`;
@@ -372,29 +369,39 @@
         }
         swipeStartX = 0;
     }
-
     function closeSwipe(index) {
         let el = document.getElementById(`cart-content-${index}`);
         if (el) el.style.transform = `translateX(0px)`;
         activeSwipeIndex = -1;
     }
-
     function handleCartItemClick(e, index) {
         if (activeSwipeIndex === index) { closeSwipe(index); return; }
         if (activeSwipeIndex !== -1) { closeSwipe(activeSwipeIndex); }
-        lastSelectedIndex = index;
-        updateUI();
+        lastSelectedIndex = index; updateUI();
     }
-
     function removeEntireItem(index) {
-        cart.splice(index, 1);
-        lastSelectedIndex = -1;
-        activeSwipeIndex = -1;
-        updateUI();
+        cart.splice(index, 1); lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI();
     }
     
     function updateUI() {
         activeSwipeIndex = -1; 
+        
+        // 處理編輯狀態的標題列
+        const cartHeader = document.getElementById('cart-header');
+        if (editingOrderId !== null) {
+            cartHeader.innerHTML = `
+                <span style="color:#fde047;">✏️ 編輯單號 #${String(editingOrderId).padStart(3,'0')}</span>
+                <button onclick="cancelEdit()" style="background:#ef4444; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:13px; font-weight:bold; cursor:pointer;">取消編輯</button>
+            `;
+            cartHeader.style.background = '#047857'; // 變為深綠色提醒
+        } else {
+            cartHeader.innerHTML = `
+                <span>🛒 購物明細</span>
+                <button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:12px; cursor:pointer;">全部清空</button>
+            `;
+            cartHeader.style.background = '#1f2937';
+        }
+
         MENU.forEach(m => {
             const btn = document.getElementById('btn-' + m.id);
             const badge = btn.querySelector('.badge');
@@ -445,7 +452,53 @@
         paidAmount = (val === 'exact') ? totalText : (val === 'clear' ? '' : val.toString());
         document.getElementById('paid-input').value = paidAmount; updateUI();
     }
-    async function askClearCart() { if (cart.length === 0) return; if (await showMsg('確定要清空點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) { cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI(); } }
+    
+    async function askClearCart() { 
+        if (cart.length === 0) return; 
+        if (await showMsg('確定要清空點餐嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) { 
+            cart = []; paidAmount = ''; document.getElementById('paid-input').value = ''; lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI(); 
+        } 
+    }
+
+    // 取消編輯模式
+    async function cancelEdit() {
+        if (await showMsg('確定要取消編輯嗎？目前的修改將不會儲存。', [{label:'返回', color:'#9ca3af', val:false}, {label:'確定取消', color:'var(--red)', val:true}])) {
+            editingOrderId = null;
+            cart = []; paidAmount = ''; lastSelectedIndex = -1; activeSwipeIndex = -1;
+            document.getElementById('paid-input').value = '';
+            updateUI();
+        }
+    }
+
+    // 載入歷史訂單進入編輯模式
+    async function editOrder(idx) {
+        if (cart.length > 0) {
+            const confirm = await showMsg('購物車目前有未結帳的餐點，\n確定要放棄並載入歷史訂單來編輯嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定載入', color:'var(--red)', val:true}]);
+            if (!confirm) return;
+        }
+        
+        const order = orderHistory[idx];
+        cart = [];
+        
+        // 解析並重建購物車
+        order.items.forEach(histItem => {
+            const hasEgg = histItem.name.includes(' (+蛋)');
+            const cleanName = histItem.name.replace(' (+蛋)', '');
+            const menuItem = MENU.find(m => m.name === cleanName);
+            if (menuItem) {
+                cart.push({ id: menuItem.id, qty: histItem.qty, hasEgg: hasEgg });
+            }
+        });
+        
+        editingOrderId = order.id;
+        paidAmount = order.paid.toString();
+        lastSelectedIndex = -1;
+        activeSwipeIndex = -1;
+        document.getElementById('paid-input').value = paidAmount;
+        
+        updateUI();
+        closeHistory();
+    }
 
     async function checkout(isPrint) {
         const total = parseInt(document.getElementById('total-price').innerText.replace('$',''));
@@ -454,20 +507,37 @@
         const paid = parseInt(paidAmount) || total;
         const change = paid - total;
         
-        const order = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: [], total, paid, change };
-        
+        const itemsToSave = [];
         cart.forEach(item => {
             const m = MENU.find(mi => mi.id === item.id);
-            order.items.push({ name: item.hasEgg ? m.name + ' (+蛋)' : m.name, qty: item.qty, subtotal: (item.hasEgg ? m.price+10 : m.price) * item.qty });
+            itemsToSave.push({ name: item.hasEgg ? m.name + ' (+蛋)' : m.name, qty: item.qty, subtotal: (item.hasEgg ? m.price+10 : m.price) * item.qty });
         });
 
-        orderHistory.unshift(order);
+        let currentOrder;
+        
+        // 判斷：如果是正在編輯歷史訂單，就覆蓋它
+        if (editingOrderId !== null) {
+            const targetIdx = orderHistory.findIndex(o => o.id === editingOrderId);
+            if (targetIdx > -1) {
+                orderHistory[targetIdx].items = itemsToSave;
+                orderHistory[targetIdx].total = total;
+                orderHistory[targetIdx].paid = paid;
+                orderHistory[targetIdx].change = change;
+                currentOrder = orderHistory[targetIdx];
+            }
+            editingOrderId = null; // 結帳完解除編輯狀態
+        } else {
+            // 正常建立新單
+            currentOrder = { id: orderCounter++, time: new Date().toLocaleTimeString('zh-TW', {hour12:false}), items: itemsToSave, total, paid, change };
+            orderHistory.unshift(currentOrder);
+            localStorage.setItem('wujie_counter', orderCounter);
+        }
+
         localStorage.setItem('wujie_orders', JSON.stringify(orderHistory));
-        localStorage.setItem('wujie_counter', orderCounter);
 
         if (isPrint) {
             const area = document.getElementById('print-area');
-            area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${order.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${change}<hr><center>謝謝光臨</center>`;
+            area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div><hr>${currentOrder.items.map(i=>`<div>${i.name} x${i.qty} $${i.subtotal}</div>`).join('')}<hr><strong>總計: $${total}</strong><br>收現: $${paid}<br>找零: $${change}<hr><center>謝謝光臨</center>`;
             window.print();
         }
 
@@ -480,16 +550,37 @@
 
     function openHistory() { renderHistory(); document.getElementById('history-modal').style.display = 'flex'; }
     function closeHistory() { document.getElementById('history-modal').style.display = 'none'; }
+    
     function renderHistory() {
         const container = document.getElementById('history-list-container');
         if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#9ca3af;">尚無紀錄</div>'; return; }
-        container.innerHTML = orderHistory.map((o, idx) => `<div class="history-item" style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd;"><div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;"><div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:12px; margin-left:6px;">${o.time}</span></div><div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button onclick="askDeleteOrder(${idx})" style="background:#fee2e2; border:none; color:var(--red); padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">🗑️ 刪除</button></div></div></div>`).join('');
+        
+        container.innerHTML = orderHistory.map((o, idx) => `
+            <div class="history-item" style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:8px;" onclick="toggleDetails(${o.id})">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">
+                    <div><span style="background:var(--primary); color:white; padding:3px 8px; border-radius:8px; font-size:12px;">#${String(o.id).padStart(3,'0')}</span><span style="color:#6b7280; font-size:13px; margin-left:6px;">${o.time}</span></div>
+                    <div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--red); font-size:18px;">$${o.total}</strong><button onclick="event.stopPropagation(); askDeleteOrder(${idx})" style="background:#fee2e2; border:none; color:var(--red); padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">🗑️ 刪除</button></div>
+                </div>
+                <div id="details-${o.id}" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #ddd; font-size:15px; color:#4b5563;">
+                    ${o.items.map(i=>`<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.name} x${i.qty}</span><span>$${i.subtotal}</span></div>`).join('')}
+                    
+                    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; border-top:1.5px solid #eee; padding-top:10px;">
+                        <div style="font-weight:900; color:var(--text); font-size:15px;">收現:$${o.paid} &nbsp; 找零:$${o.change}</div>
+                        <button onclick="event.stopPropagation(); editOrder(${idx})" style="background:var(--primary); color:white; border:none; padding:6px 14px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">✏️ 編輯這筆</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
+
+    function toggleDetails(id) { const el = document.getElementById('details-' + id); if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+    
     async function askDeleteOrder(idx) { 
         if (await showMsg('確定要刪除這筆紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'刪除', color: 'var(--red)', val:true}])) {
             orderHistory.splice(idx, 1); localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory(); 
         }
     }
+    
     window.onload = initMenu;
 </script>
 </body>
