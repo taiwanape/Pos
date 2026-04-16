@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.14 (修復直向模式底部被裁切、擠壓的問題，改用絕對定位鎖死視窗) -->
-    <meta name="app-version" content="1.3.14">
+    <!-- 版本號碼：1.3.15 (導入流動彈性網格與動態比例，完美適配全系列 iPhone & iPad 橫直向) -->
+    <meta name="app-version" content="1.3.15">
     
     <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,10 +23,10 @@
             --text: #1f2937; --red: #ef4444; --green: #16a34a; --egg: #f59e0b;
         }
         
-        /* 鎖定所有的多點觸控和雙擊預設行為 */
+        /* 鎖定多點觸控和預設行為 */
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         
-        /* 全域鎖死：禁止原生滑動與縮放 */
+        /* 終極鎖死底層：嚴格防止超出視窗的縮放與彈回效應 */
         html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
@@ -35,69 +35,66 @@
             overscroll-behavior: none;
         }
 
-        /* 終極鎖死佈局：取代 height 100dvh，改用絕對定位綁死四角，徹底防止底部裁切 */
+        /* 導入 iOS 專屬安全邊界 (Safe Area) 完美避開劉海與底線 */
         .app-container { 
             position: absolute; top: 0; bottom: 0; left: 0; right: 0;
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
             overflow: hidden;
+            background: var(--bg);
         }
 
-        .menu-section { 
-            display: flex; flex-direction: column; padding: 8px; flex: 1; overflow: hidden;
-        }
+        /* --- 自動流動彈性佈局 --- */
+        
+        /* 手機模式 (Portrait) 預設分割：菜單 45%、結帳 55% */
+        .menu-section { display: flex; flex-direction: column; padding: 8px; flex: 45%; min-height: 0; overflow: hidden; }
+        .cart-section { background: white; display: flex; flex-direction: column; flex: 55%; min-height: 0; border-top: 3px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
 
-        /* 針對需要滾動的區域特別開啟垂直滾動權限 */
-        .menu-scroll-area, .cart-list, #history-list-container {
-            flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px;
-            touch-action: pan-y; 
-            overscroll-behavior: contain;
-        }
-
-        /* 數量選擇列 (加入 min-height 防止被垂直擠壓) */
-        .qty-selector-container {
-            background: white; padding: 6px 8px; border-radius: 12px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-            display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-bottom: 2px;
-            min-height: 52px; /* 確保直向模式下絕對不會被壓扁 */
-        }
-        .qty-btns { display: flex; flex: 1; gap: 4px; height: 100%; }
-        .qty-num-btn {
-            flex: 1 1 0; min-width: 0; height: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
-            background: white; font-size: 18px; font-weight: bold; color: var(--text);
-            display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
-        }
-        .qty-num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .cart-section { 
-            background: white; display: flex; flex-direction: column; 
-            border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-            height: 45%; flex-shrink: 0;
-        }
-
-        /* iPad Air 2 適配佈局 */
+        /* 平板與桌面模式 (Landscape & Tablet) */
         @media (min-width: 768px) {
             .app-container { flex-direction: row; }
-            .menu-section { flex: 1; height: 100%; border-right: 2px solid #d1d5db; padding: 10px; }
-            .cart-section { width: 320px; height: 100%; border-top: none; }
-            .menu-grid { grid-template-columns: repeat(3, 1fr) !important; }
-
-            @media (orientation: landscape) {
-                .cart-section { width: 400px; }
-                .menu-grid { grid-template-columns: repeat(4, 1fr) !important; }
-                .menu-btn { min-height: 65px; padding: 10px 4px; }
-            }
+            .menu-section { flex: 1; border-right: 3px solid #d1d5db; padding: 12px; }
+            /* 結帳區寬度自動適配：最小320px，理想35vw，最大420px */
+            .cart-section { flex: none; width: clamp(320px, 35vw, 420px); border-top: none; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
         }
 
-        .header { background: white; padding: 8px 10px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; flex-shrink: 0; }
+        /* 超寬 iPhone 橫向模式 (特殊保護，確保鍵盤裝得下) */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .app-container { flex-direction: row; }
+            .menu-section { flex: 1; border-right: 2px solid #ccc; padding: 4px; }
+            .cart-section { flex: none; width: 300px; border-top: none; }
+            .header { display: none; } /* 手機橫向空間太小，隱藏標題 */
+        }
+
+        /* 允許捲動的區域 */
+        .menu-scroll-area, .cart-list, #history-list-container {
+            flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 5px; min-height: 0;
+            touch-action: pan-y; overscroll-behavior: contain;
+        }
+
+        /* 標題區 */
+        .header { background: white; padding: 8px 12px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; flex-shrink: 0; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .header-phone { color: var(--primary); font-weight: 800; font-size: 14px; }
         .history-btn-inline { width: 100%; background: #374151; color: white; border: none; border-radius: 6px; padding: 8px; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
 
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        /* 菜單網格：流動自適應！(Auto-fill) 
+           不再寫死幾欄，它會根據空間自己排滿，完美適配 iPad Air 2 */
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+            gap: 8px; 
+        }
+        @media (min-width: 768px) {
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        }
+
         .menu-btn { 
-            background: white; border: 2.5px solid transparent; border-radius: 12px; 
-            padding: 12px 4px; min-height: 70px;
+            background: white; border: 2px solid transparent; border-radius: 12px; 
+            padding: 10px 4px; min-height: clamp(65px, 10vh, 85px);
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.04); 
         }
@@ -105,83 +102,75 @@
         .menu-btn.active { background: var(--primary-light); border-color: var(--primary); }
         .badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .menu-btn.active .badge { display: flex; }
-        
-        .menu-name { font-size: 16px; font-weight: 900; margin-bottom: 2px; text-align: center; line-height: 1.2; color: #1f2937; }
+        .menu-name { font-size: clamp(14px, 3vw, 17px); font-weight: 900; margin-bottom: 2px; text-align: center; line-height: 1.2; color: #1f2937; }
         .menu-price { font-size: 13px; font-weight: bold; color: #6b7280; }
 
-        .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; transition: background 0.3s; }
-        
-        /* 購物清單區域 */
-        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; flex: 1; min-height: 0; }
-        
-        /* 左滑刪除樣式設計 */
-        .cart-item-wrapper {
-            position: relative; border-radius: 10px; border: 2.5px solid #e5e7eb;
-            background: var(--red); overflow: hidden; flex-shrink: 0;
+        /* 修改數量快捷列 */
+        .qty-selector-container {
+            background: white; padding: 6px 8px; border-radius: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-top: 4px; margin-bottom: 2px;
         }
+        .qty-btns { display: flex; flex: 1; gap: 4px; height: 100%; }
+        .qty-num-btn {
+            flex: 1 1 0; min-width: 0; height: clamp(38px, 6vh, 48px); border: 1.5px solid #d1d5db; border-radius: 8px;
+            background: white; font-size: 18px; font-weight: bold; color: var(--text);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+        }
+        .qty-num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* 購物清單區 */
+        .cart-header { background: #1f2937; color: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; transition: background 0.3s; }
+        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; }
+        
+        .cart-item-wrapper { position: relative; border-radius: 10px; border: 2px solid #e5e7eb; background: var(--red); overflow: hidden; flex-shrink: 0; }
         .cart-item-wrapper.last-added { border-color: var(--primary); }
-        
-        .cart-item-delete-bg {
-            position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--red); color: white; font-weight: bold; cursor: pointer; z-index: 1;
-        }
-        
-        .cart-item-content {
-            position: relative; background: white; padding: 8px; width: 100%; height: 100%;
-            z-index: 2; display: flex; flex-direction: column; gap: 4px; transition: transform 0.2s ease-out;
-        }
+        .cart-item-delete-bg { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; display: flex; align-items: center; justify-content: center; background: var(--red); color: white; font-weight: bold; cursor: pointer; z-index: 1; }
+        .cart-item-content { position: relative; background: white; padding: 8px; width: 100%; height: 100%; z-index: 2; display: flex; flex-direction: column; gap: 4px; transition: transform 0.2s ease-out; }
         .cart-item-content.last-added { background: #f0f7ff; }
         
         .qty-controls { display: flex; align-items: center; background: #f3f4f6; border-radius: 6px; border: 1px solid #d1d5db; overflow: hidden; }
         .qty-btn { background: white; border: none; width: 30px; height: 30px; font-size: 18px; font-weight: bold; color: #4b5563; }
-        
         .addon-toggle { display: flex; align-items: center; gap: 5px; background: #fffbeb; border: 1.2px solid var(--egg); color: #92400e; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer; width: fit-content; }
         .addon-toggle.active { background: var(--egg); color: white; }
 
-        .checkout-panel { padding: 10px; border-top: 2px solid #e5e7eb; background: white; flex-shrink: 0; }
-        .total-price { font-size: 36px; font-weight: 900; color: var(--red); line-height: 1; }
+        /* 結帳收銀面板 */
+        .checkout-panel { padding: 10px 12px; border-top: 2px solid #e5e7eb; background: white; flex-shrink: 0; }
+        .total-price { font-size: clamp(32px, 5vw, 42px); font-weight: 900; color: var(--red); line-height: 1; }
         
-        /* 純 Div 顯示器，徹底防止虛擬鍵盤彈出 */
+        /* 輸入顯示器 */
         .input-display {
-            width: 100%; padding: 8px 10px 8px 35px; border: 2px solid #d1d5db;
-            border-radius: 10px; font-size: 24px; font-weight: bold; text-align: right;
-            background: white; color: var(--text); height: 46px;
+            width: 100%; padding: 6px 10px 6px 35px; border: 2px solid #d1d5db;
+            border-radius: 10px; font-size: clamp(20px, 3vw, 24px); font-weight: bold; text-align: right;
+            background: white; color: var(--text); height: clamp(40px, 6vh, 48px);
             display: flex; align-items: center; justify-content: flex-end; overflow: hidden; margin-bottom: 6px;
         }
 
-        /* 極簡 3x4 數字鍵盤 (不再混雜快速金額) */
-        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
+        /* 數字鍵盤自動延展 */
+        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(4px, 1vw, 8px); margin: 6px 0; }
         .np-btn {
-            background: white; border: 1.5px solid #d1d5db; border-radius: 8px;
-            font-size: 22px; font-weight: bold; color: #1f2937;
-            height: 48px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background: white; border: 1px solid #d1d5db; border-radius: 8px;
+            font-size: clamp(18px, 3vw, 22px); font-weight: bold; color: #1f2937;
+            height: clamp(38px, 5.5vh, 52px); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 0;
         }
         .np-btn:active { background: #e5e7eb; transform: scale(0.95); }
-        .np-action { font-size: 18px; }
 
-        @media (min-width: 768px) and (orientation: landscape) {
-            .numpad-grid { gap: 6px; margin: 8px 0; }
-            .np-btn { height: 42px; font-size: 20px; }
-            .input-display { height: 42px; font-size: 22px; margin-bottom: 8px; }
-        }
-
-        .change-row { background: #f3f4f6; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1px solid #e5e7eb; }
-        .change-val { font-size: 26px; font-weight: 900; }
+        .change-row { background: #f3f4f6; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border: 1px solid #e5e7eb; }
+        .change-val { font-size: clamp(24px, 4vw, 30px); font-weight: 900; }
         
-        .submit-btn { padding: 12px; color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .submit-btn { padding: clamp(10px, 2vh, 14px); color: white; border: none; border-radius: 10px; font-size: clamp(18px, 3vw, 22px); font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 2px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-print { background: #4b5563; }
         .btn-pay { background: var(--primary); }
 
-        /* 彈窗對比強化 */
+        /* 彈窗設計 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 15px; }
         .modal-content { background: white !important; width: 100%; max-width: 500px; max-height: 85dvh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 4px solid #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
         .msg-content { background: white !important; width: 100%; max-width: 420px; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 4px solid #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        #msg-box-text { font-size: 24px; font-weight: 800; line-height: 1.6; color: #1f2937; padding: 30px 20px 10px; text-align: center; }
-        .version-tag { text-align: center; font-size: 9px; color: #9ca3af; padding-top: 4px; flex-shrink: 0; }
+        #msg-box-text { font-size: clamp(20px, 4vw, 24px); font-weight: 800; line-height: 1.6; color: #1f2937; padding: 30px 20px 10px; text-align: center; }
 
-        #update-banner { position: fixed; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 3px 15px rgba(0,0,0,0.3); font-size: 16px; justify-content: center; align-items: center; gap: 15px; cursor: pointer; }
+        .version-tag { text-align: center; font-size: 9px; color: #9ca3af; padding-top: 4px; flex-shrink: 0; }
+        #update-banner { position: absolute; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 3px 15px rgba(0,0,0,0.3); font-size: 16px; justify-content: center; align-items: center; gap: 15px; cursor: pointer; }
+        
         #print-area { display: none; }
         @media print { .app-container, .modal-overlay, #update-banner { display: none !important; } #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; color: black; } @page { margin: 0; } }
     </style>
@@ -194,6 +183,7 @@
 </div>
 
 <div class="app-container">
+    <!-- 左側選單：使用自動填滿彈性網格 -->
     <div class="menu-section">
         <div class="header">
             <div class="header-top-row">
@@ -222,8 +212,8 @@
         <div class="version-tag">POS V <span id="current-v-text"></span></div>
     </div>
 
+    <!-- 右側結帳區：自適應寬度與高度 -->
     <div class="cart-section">
-        <!-- 頂部會隨編輯狀態改變顏色與按鈕 -->
         <div class="cart-header" id="cart-header">
             <span>🛒 購物明細</span>
             <button onclick="askClearCart()" style="background:#4b5563; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:12px; cursor:pointer;">清空</button>
@@ -236,13 +226,11 @@
                 <span class="total-price" id="total-price">$0</span>
             </div>
             
-            <!-- 純 Div 顯示器，徹底防止 iOS 虛擬鍵盤彈出 -->
             <div style="position:relative;">
                 <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:20px; z-index:10;">$</span>
                 <div id="paid-input-display" class="input-display"></div>
             </div>
             
-            <!-- 極簡 3x4 數字鍵盤 -->
             <div class="numpad-grid">
                 <button class="np-btn" onclick="appendNum('1')">1</button>
                 <button class="np-btn" onclick="appendNum('2')">2</button>
@@ -287,6 +275,7 @@
 <div id="print-area"></div>
 
 <script>
+    /* 核心防護：阻擋 iOS 原生雙擊放大、雙指縮放等手勢 */
     document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
 
@@ -338,7 +327,7 @@
             txt.innerHTML = text; btns.innerHTML = '';
             if (options.length === 0) options = [{ label: '確認好的', color: 'var(--primary)', val: true }];
             options.forEach(opt => {
-                const b = document.createElement('button'); b.style.flex = '1'; b.style.padding = '20px'; b.style.border = 'none'; b.style.borderRadius = '12px'; b.style.color = 'white'; b.style.fontWeight = '900'; b.style.fontSize = '20px'; b.innerText = opt.label; b.style.backgroundColor = opt.color; b.style.cursor = 'pointer';
+                const b = document.createElement('button'); b.style.flex = '1'; b.style.padding = '18px'; b.style.border = 'none'; b.style.borderRadius = '12px'; b.style.color = 'white'; b.style.fontWeight = '900'; b.style.fontSize = '20px'; b.innerText = opt.label; b.style.backgroundColor = opt.color; b.style.cursor = 'pointer';
                 b.onclick = () => { box.style.display = 'none'; resolve(opt.val); }; btns.appendChild(b);
             });
             box.style.display = 'flex';
@@ -379,7 +368,6 @@
         updateUI();
     }
 
-    // 左滑刪除邏輯
     function handleTouchStart(e, index) { swipeStartX = e.touches[0].clientX; swipeCurrentX = swipeStartX; }
     function handleTouchMove(e, index) {
         if (!swipeStartX) return;
@@ -421,26 +409,18 @@
         cart.splice(index, 1); lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI();
     }
 
-    // POS 內建數字鍵盤邏輯
     function appendNum(val) {
         if (val === 'back') {
             paidAmount = paidAmount.slice(0, -1);
         } else {
-            if (paidAmount === '0') {
-                paidAmount = val;
-            } else {
-                paidAmount += val;
-            }
+            if (paidAmount === '0') { paidAmount = val; } else { paidAmount += val; }
         }
-        // 限制輸入長度
         if (paidAmount.length > 6) paidAmount = paidAmount.slice(0, 6);
         updateUI();
     }
 
     function setQuickAmount(val) {
-        if (val === 'clear') {
-            paidAmount = '';
-        }
+        if (val === 'clear') { paidAmount = ''; }
         updateUI();
     }
     
@@ -451,7 +431,7 @@
         if (editingOrderId !== null) {
             cartHeader.innerHTML = `
                 <span style="color:#fde047;">✏️ 編輯單號 #${String(editingOrderId).padStart(3,'0')}</span>
-                <button onclick="cancelEdit()" style="background:#ef4444; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:13px; font-weight:bold; cursor:pointer;">取消編輯</button>
+                <button onclick="cancelEdit()" style="background:#ef4444; border:none; color:white; padding:4px 12px; border-radius:4px; font-size:13px; font-weight:bold; cursor:pointer;">取消</button>
             `;
             cartHeader.style.background = '#047857';
         } else {
@@ -499,8 +479,6 @@
         }).join('') || '<div style="padding:30px; text-align:center; color:#9ca3af; font-weight:bold;">等待點餐...</div>';
         
         document.getElementById('total-price').innerText = '$' + total;
-        
-        // 更新自訂的顯示框
         document.getElementById('paid-input-display').innerText = paidAmount;
 
         const paid = parseInt(paidAmount) || 0;
@@ -519,15 +497,13 @@
 
     async function cancelEdit() {
         if (await showMsg('確定要取消編輯嗎？目前的修改將不會儲存。', [{label:'返回', color:'#9ca3af', val:false}, {label:'確定取消', color:'var(--red)', val:true}])) {
-            editingOrderId = null;
-            cart = []; paidAmount = ''; lastSelectedIndex = -1; activeSwipeIndex = -1;
-            updateUI();
+            editingOrderId = null; cart = []; paidAmount = ''; lastSelectedIndex = -1; activeSwipeIndex = -1; updateUI();
         }
     }
 
     async function editOrder(idx) {
         if (cart.length > 0) {
-            const confirm = await showMsg('購物車目前有未結帳的餐點，\n確定要放棄並載入歷史訂單來編輯嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定載入', color:'var(--red)', val:true}]);
+            const confirm = await showMsg('購物車目前有未結帳的餐點，\n確定要放棄並載入歷史訂單嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定載入', color:'var(--red)', val:true}]);
             if (!confirm) return;
         }
         
@@ -538,18 +514,11 @@
             const hasEgg = histItem.name.includes(' (+蛋)');
             const cleanName = histItem.name.replace(' (+蛋)', '');
             const menuItem = MENU.find(m => m.name === cleanName);
-            if (menuItem) {
-                cart.push({ id: menuItem.id, qty: histItem.qty, hasEgg: hasEgg });
-            }
+            if (menuItem) { cart.push({ id: menuItem.id, qty: histItem.qty, hasEgg: hasEgg }); }
         });
         
-        editingOrderId = order.id;
-        paidAmount = order.paid.toString();
-        lastSelectedIndex = -1;
-        activeSwipeIndex = -1;
-        
-        updateUI();
-        closeHistory();
+        editingOrderId = order.id; paidAmount = order.paid.toString(); lastSelectedIndex = -1; activeSwipeIndex = -1;
+        updateUI(); closeHistory();
     }
 
     async function checkout(isPrint) {
