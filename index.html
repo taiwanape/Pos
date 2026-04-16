@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.12 (極簡化數字鍵盤，移除多餘的快速金額按鈕，釋放畫面空間) -->
-    <meta name="app-version" content="1.3.12">
+    <!-- 版本號碼：1.3.13 (修復購物車品項過多時被擠壓的問題，改為順暢上下滑動) -->
+    <meta name="app-version" content="1.3.13">
     
     <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -82,6 +82,8 @@
                 .menu-btn { min-height: 65px; padding: 10px 4px; }
                 .qty-num-btn { height: 36px; }
             }
+            /* 確保購物明細可以滑動，並且設定 min-height: 0 避免 Safari Flexbox Bug */
+            .cart-list { flex: 1; overflow-y: auto; min-height: 0; }
         }
 
         .header { background: white; padding: 8px 10px; border-radius: 10px; font-weight: bold; border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; flex-shrink: 0; }
@@ -105,7 +107,9 @@
         .menu-price { font-size: 13px; font-weight: bold; color: #6b7280; }
 
         .cart-header { background: #1f2937; color: white; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; transition: background 0.3s; }
-        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; }
+        
+        /* 購物清單區域：確保具有 flex 屬性與 overflow，且 min-height: 0 讓內部子元素可以超出 */
+        .cart-list { padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 6px; background: #f9fafb; overflow-y: auto; flex: 1; min-height: 0; }
         
         /* 左滑刪除樣式設計 */
         .cart-item-wrapper {
@@ -114,6 +118,7 @@
             border: 2.5px solid #e5e7eb;
             background: var(--red);
             overflow: hidden;
+            flex-shrink: 0; /* 關鍵修正：禁止品項被壓縮，這樣才能在父元素產生滾動條 */
         }
         .cart-item-wrapper.last-added { border-color: var(--primary); }
         
