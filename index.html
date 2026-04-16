@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.11 (新增內建 POS 數字鍵盤，徹底根除 iOS 虛擬鍵盤干擾問題) -->
-    <meta name="app-version" content="1.3.11">
+    <!-- 版本號碼：1.3.12 (極簡化數字鍵盤，移除多餘的快速金額按鈕，釋放畫面空間) -->
+    <meta name="app-version" content="1.3.12">
     
     <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,7 +30,7 @@
         html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
-            width: 100%; height: 100%; overflow: hidden;
+            width: 100%; height: 100%; overflow: hidden; position: fixed;
             touch-action: none; 
             overscroll-behavior: none;
         }
@@ -66,7 +66,7 @@
         .cart-section { 
             background: white; display: flex; flex-direction: column; 
             border-top: 4px solid #d1d5db; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-            height: 52%; flex-shrink: 0;
+            height: 45%; flex-shrink: 0;
         }
 
         /* iPad Air 2 適配佈局 */
@@ -96,6 +96,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.04); 
         }
+        .menu-btn:active { background: #f9fafb; transform: scale(0.97); }
         .menu-btn.active { background: var(--primary-light); border-color: var(--primary); }
         .badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .menu-btn.active .badge { display: flex; }
@@ -139,33 +140,33 @@
         .checkout-panel { padding: 10px; border-top: 2px solid #e5e7eb; background: white; flex-shrink: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .total-price { font-size: 36px; font-weight: 900; color: var(--red); line-height: 1; }
         
-        /* 改為純 Div 顯示器，徹底防止虛擬鍵盤彈出 */
+        /* 純 Div 顯示器，徹底防止虛擬鍵盤彈出 */
         .input-display {
             width: 100%; padding: 8px 10px 8px 35px; border: 2px solid #d1d5db;
             border-radius: 10px; font-size: 24px; font-weight: bold; text-align: right;
             background: white; color: var(--text); height: 46px;
             display: flex; align-items: center; justify-content: flex-end; overflow: hidden;
+            margin-bottom: 6px;
         }
 
-        /* 內建 POS 數字鍵盤 (4x4 網格) */
-        .numpad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+        /* 極簡 3x4 數字鍵盤 (不再混雜快速金額) */
+        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
         .np-btn {
             background: white; border: 1.5px solid #d1d5db; border-radius: 8px;
             font-size: 22px; font-weight: bold; color: #1f2937;
-            height: 42px; display: flex; align-items: center; justify-content: center;
+            height: 48px; display: flex; align-items: center; justify-content: center;
             cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .np-btn:active { background: #e5e7eb; transform: scale(0.95); }
-        .np-action { font-size: 16px; }
+        .np-action { font-size: 18px; }
 
         @media (min-width: 768px) and (orientation: landscape) {
-            .numpad-grid { gap: 4px; margin: 6px 0; }
-            .np-btn { height: 38px; font-size: 20px; }
-            .np-action { font-size: 15px; }
-            .input-display { height: 42px; font-size: 22px; }
+            .numpad-grid { gap: 6px; margin: 8px 0; }
+            .np-btn { height: 42px; font-size: 20px; }
+            .input-display { height: 42px; font-size: 22px; margin-bottom: 8px; }
         }
 
-        .change-row { background: #f3f4f6; padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border: 1px solid #e5e7eb; }
+        .change-row { background: #f3f4f6; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1px solid #e5e7eb; }
         .change-val { font-size: 26px; font-weight: 900; }
         
         .submit-btn { padding: 12px; color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -233,36 +234,32 @@
                 <span class="total-price" id="total-price">$0</span>
             </div>
             
-            <!-- 替換成純 Div 顯示器，徹底防止 iOS 虛擬鍵盤彈出 -->
+            <!-- 純 Div 顯示器，徹底防止 iOS 虛擬鍵盤彈出 -->
             <div style="position:relative;">
-                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:20px; z-index:10;">$</span>
+                <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:bold; color:#9ca3af; font-size:20px; z-index:10;">$</span>
                 <div id="paid-input-display" class="input-display"></div>
             </div>
             
-            <!-- 內建 POS 數字鍵盤 (含快速功能鍵) -->
+            <!-- 極簡 3x4 數字鍵盤 -->
             <div class="numpad-grid">
                 <button class="np-btn" onclick="appendNum('1')">1</button>
                 <button class="np-btn" onclick="appendNum('2')">2</button>
                 <button class="np-btn" onclick="appendNum('3')">3</button>
-                <button class="np-btn np-action" style="background:#dcfce7; color:var(--green); border-color:#bbf7d0;" onclick="setQuickAmount('exact')">剛好</button>
 
                 <button class="np-btn" onclick="appendNum('4')">4</button>
                 <button class="np-btn" onclick="appendNum('5')">5</button>
                 <button class="np-btn" onclick="appendNum('6')">6</button>
-                <button class="np-btn np-action" style="background:#f3f4f6;" onclick="setQuickAmount(100)">100</button>
 
                 <button class="np-btn" onclick="appendNum('7')">7</button>
                 <button class="np-btn" onclick="appendNum('8')">8</button>
                 <button class="np-btn" onclick="appendNum('9')">9</button>
-                <button class="np-btn np-action" style="background:#f3f4f6;" onclick="setQuickAmount(500)">500</button>
 
+                <button class="np-btn np-action" style="background:#fee2e2; color:var(--red); border-color:#fecaca;" onclick="setQuickAmount('clear')">清除</button>
                 <button class="np-btn" onclick="appendNum('0')">0</button>
-                <button class="np-btn" onclick="appendNum('00')">00</button>
-                <button class="np-btn np-action" style="background:#fee2e2; color:var(--red); border-color:#fecaca;" onclick="appendNum('back')">⌫</button>
-                <button class="np-btn np-action" style="background:#f3f4f6;" onclick="setQuickAmount(1000)">1000</button>
+                <button class="np-btn np-action" style="background:#e5e7eb; color:#4b5563; border-color:#d1d5db;" onclick="appendNum('back')">⌫</button>
             </div>
 
-            <div class="change-row"><span style="font-weight:bold; color:#4b5563; font-size:14px;">找零</span><span class="change-val" id="change-val">$0</span></div>
+            <div class="change-row"><span style="font-weight:bold; color:#4b5563; font-size:15px;">找零</span><span class="change-val" id="change-val">$0</span></div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                 <button class="submit-btn btn-print" onclick="checkout(true)">結帳+列印</button>
                 <button class="submit-btn btn-pay" onclick="checkout(false)">結帳</button>
@@ -427,23 +424,21 @@
         if (val === 'back') {
             paidAmount = paidAmount.slice(0, -1);
         } else {
-            // 避免開頭多個 0，以及如果開頭是 0 直接被取代
-            if (paidAmount === '0' && val !== '00') {
+            if (paidAmount === '0') {
                 paidAmount = val;
-            } else if (paidAmount === '0' && val === '00') {
-                // 不動作
             } else {
                 paidAmount += val;
             }
         }
-        // 限制輸入長度，避免破版
+        // 限制輸入長度
         if (paidAmount.length > 6) paidAmount = paidAmount.slice(0, 6);
         updateUI();
     }
 
     function setQuickAmount(val) {
-        const totalText = document.getElementById('total-price').innerText.replace('$','');
-        paidAmount = (val === 'exact') ? totalText : (val === 'clear' ? '' : val.toString());
+        if (val === 'clear') {
+            paidAmount = '';
+        }
         updateUI();
     }
     
@@ -503,7 +498,7 @@
         
         document.getElementById('total-price').innerText = '$' + total;
         
-        // 更新自訂的顯示框，取代原有的 input
+        // 更新自訂的顯示框
         document.getElementById('paid-input-display').innerText = paidAmount;
 
         const paid = parseInt(paidAmount) || 0;
