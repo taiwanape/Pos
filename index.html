@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.3.9 (新增歷史訂單「載入並重新編輯」功能) -->
-    <meta name="app-version" content="1.3.9">
+    <!-- 版本號碼：1.3.10 (修復 iOS 鍵盤收起後畫面當機的 Bug) -->
+    <meta name="app-version" content="1.3.10">
     
+    <!-- 蘋果 Web App 模式專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="五結POS">
@@ -25,11 +26,11 @@
         /* 鎖定所有的多點觸控和雙擊預設行為 */
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         
-        /* 鎖定視窗高度，禁止瀏覽器上下拉動回彈，並全面禁止手勢縮放 */
+        /* 鎖定視窗高度，禁止瀏覽器上下拉動回彈，並全面禁止手勢縮放 (移除 position: fixed 解決鍵盤當機問題) */
         html, body {
             margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none;
-            width: 100%; height: 100%; overflow: hidden; position: fixed;
+            width: 100%; height: 100%; overflow: hidden;
             touch-action: none; 
             overscroll-behavior: none;
         }
@@ -274,6 +275,19 @@
     let orderCounter = parseInt(localStorage.getItem('wujie_counter')) || 1;
     const currentVersion = document.querySelector('meta[name="app-version"]').content;
     document.getElementById('current-v-text').innerText = currentVersion;
+
+    // 修復 iOS 鍵盤收起後畫面觸控偏移 (當機) 的 Bug
+    const paidInputEl = document.getElementById('paid-input');
+    paidInputEl.addEventListener('blur', () => {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }, 50);
+    });
+    paidInputEl.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') paidInputEl.blur(); // 按下 Enter 自動收起鍵盤
+    });
 
     function initMenu() {
         const grid = document.getElementById('menu-grid');
