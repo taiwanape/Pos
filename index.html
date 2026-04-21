@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.5.3 (菜單字體特大化霸滿UI、數量列間距極致壓縮、底部留白全部拔除) -->
-    <meta name="app-version" content="1.5.3">
+    <!-- 版本號碼：1.5.7 (主畫面維持 1.5.3 完美壓縮，歷史訂單全比例 1.5 倍等比巨型化) -->
+    <meta name="app-version" content="1.5.7">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +40,7 @@
             background: var(--bg);
         }
 
-        /* 壓縮左側底部 Padding 釋放空間 */
+        /* 主畫面維持 1.5.3 極限壓縮配置 */
         .menu-section { display: flex; flex-direction: column; padding: 6px 6px 2px 6px; flex: 1; min-height: 0; }
         .cart-section { background: white; display: flex; flex-direction: column; flex: 1.2; min-height: 0; border-top: 3px solid #d1d5db; box-shadow: 0 -3px 10px rgba(0,0,0,0.05); }
 
@@ -67,16 +67,14 @@
         .header-phone { color: var(--primary); font-weight: 900; font-size: 14px; }
         .history-btn-inline { width: 100%; background: #374151; color: white; border: none; border-radius: 6px; padding: 8px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        /* =========================================================
-           ⭐ 左側菜單特大化 (霸滿UI) ⭐
-           ========================================================= */
+        /* 左側菜單特大化 (霸滿UI) */
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
         @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; } }
         @media (min-width: 768px) and (orientation: landscape) { .menu-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; } }
 
         .menu-btn { 
             background: white; border: 2px solid transparent; border-radius: 10px; 
-            padding: 4px 2px; /* 極限壓縮內部留白，把空間還給文字 */
+            padding: 4px 2px; 
             min-height: clamp(65px, 10vh, 85px); height: auto;
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
@@ -87,14 +85,13 @@
         .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .menu-btn.active .badge { display: flex; }
         
-        /* 核心修改：菜單字體巨幅放大 */
         .menu-name { 
-            font-size: clamp(17px, 3.5vw, 24px); /* 在 iPad 上高達 24px，非常巨大 */
+            font-size: clamp(17px, 3.5vw, 24px); 
             font-weight: 900; 
             margin-bottom: 0px; 
             text-align: center; 
             line-height: 1.15; 
-            letter-spacing: -0.5px; /* 微壓縮字距避免破版 */
+            letter-spacing: -0.5px; 
             color: #1f2937; 
         }
         .menu-price { 
@@ -104,16 +101,13 @@
             margin-top: 2px;
         }
 
-        /* =========================================================
-           ⭐ 數量列與底部極限壓縮 ⭐
-           ========================================================= */
+        /* 數量列與底部極限壓縮 */
         .qty-selector-container {
             background: white; padding: 4px 6px; border-radius: 8px; box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
             display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-top: 4px; margin-bottom: 0px;
         }
         .qty-label { font-weight: 900; color: #6b7280; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
         
-        /* 數字間距壓縮到極限 2px */
         .qty-btns { display: flex; flex: 1; gap: 2px; height: 100%; } 
         
         .qty-num-btn {
@@ -123,16 +117,13 @@
         }
         .qty-num-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 版本號底部空間徹底拔除 */
         .version-tag { 
             text-align: center; font-size: 10px; color: #9ca3af; 
             padding-top: 2px; padding-bottom: 0; margin: 0;
             flex-shrink: 0; font-weight: bold; line-height: 1; 
         }
 
-        /* =========================================================
-           右側：結帳收銀面板壓縮
-           ========================================================= */
+        /* 右側：結帳收銀面板壓縮 */
         .cart-header { background: #1f2937; color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; flex-shrink: 0; }
         .cart-header-actions { display: flex; align-items: center; gap: 6px; }
         .dining-toggle { display: flex; background: #374151; border-radius: 6px; overflow: hidden; border: 1px solid #4b5563; }
@@ -183,44 +174,85 @@
         .btn-pay { background: var(--primary); }
 
         /* =========================================================
-           彈窗共用設計 (X鍵絕對釘死右上角)
+           ⭐ 彈窗共用設計 (1.5.3 等比例 1.5倍巨型化) ⭐
            ========================================================= */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: white !important; width: 100%; max-width: 600px; max-height: 90dvh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; border: 4px solid #fff; box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; }
+        
+        /* 原本 600px -> 放大為 900px */
+        .modal-content { background: white !important; width: 95%; max-width: 900px; max-height: 90dvh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 6px solid #fff; box-shadow: 0 22px 60px rgba(0,0,0,0.6); position: relative; }
         
         .modal-header-bar {
-            padding: 16px 60px 16px 20px; 
-            border-bottom: 2px solid #eee; background: #f9fafb;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-            border-radius: 12px 12px 0 0; position: relative;
+            padding: 24px 90px 24px 30px; 
+            border-bottom: 3px solid #eee; background: #f9fafb;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            border-radius: 18px 18px 0 0; position: relative;
         }
         .modal-close-btn {
-            position: absolute; right: 12px; top: 12px;
-            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-            font-size: 40px; border: none; background: transparent; color: #9ca3af; 
+            position: absolute; right: 18px; top: 18px;
+            width: 66px; height: 66px; display: flex; align-items: center; justify-content: center;
+            font-size: 60px; border: none; background: transparent; color: #9ca3af; 
             cursor: pointer; line-height: 1; padding: 0; z-index: 20;
         }
 
-        .msg-content { background: white !important; width: 100%; max-width: 420px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; border: 4px solid #fff; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
-        #msg-box-text { font-size: 24px; font-weight: 900; line-height: 1.6; color: #1f2937; padding: 30px 20px 10px; text-align: center; }
+        .modal-title-text { margin: 0; font-size: 36px; font-weight: 900; }
+        
+        .mh-btn-report { background: #10b981; color: white; border: none; padding: 9px 18px; border-radius: 9px; font-weight: bold; font-size: 22px; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .mh-btn-export { background: #6366f1; color: white; border: none; padding: 9px 18px; border-radius: 9px; font-weight: bold; font-size: 22px; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .mh-btn-clear { font-size: 21px; background: #fee2e2; color: var(--red); border: 2px solid #fecaca; border-radius: 12px; padding: 9px 18px; font-weight: bold; cursor: pointer; margin-top: 6px; }
 
+        /* 歷史訂單 - 列表內部等比巨型化 */
+        #history-list-container { padding: 24px; gap: 18px; }
         .history-date-header {
-            background: #dbeafe; color: #1e40af; font-weight: 900; font-size: 16px;
-            padding: 10px 14px; border-radius: 8px; margin: 12px 0 6px 0;
-            position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            background: #dbeafe; color: #1e40af; font-weight: 900; 
+            font-size: 24px; padding: 15px 21px; border-radius: 12px; margin: 18px 0 9px 0;
+            position: sticky; top: 0; z-index: 10; box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: space-between; gap: 9px;
         }
+        .date-label { display: flex; align-items: center; gap: 9px; }
+        .date-total { background: white; color: var(--red); padding: 3px 12px; border-radius: 12px; font-size: 22px; box-shadow: 0 1.5px 4.5px rgba(0,0,0,0.1); }
+        
+        .history-item { background: white; padding: 18px; border-radius: 15px; border: 2px solid #ddd; margin-bottom: 12px; cursor: pointer; }
+        .hi-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .hi-left { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+        .hi-id { background: var(--primary); color: white; padding: 3px 9px; border-radius: 9px; font-size: 24px; }
+        .hi-time { color: #6b7280; font-size: 21px; }
+        .hi-type { background: #e5e7eb; padding: 3px 6px; border-radius: 6px; font-size: 18px; }
+        .hi-right { display: flex; align-items: center; gap: 15px; }
+        .hi-total { color: var(--red); font-size: 30px; }
+        .hi-del { background: #fee2e2; border: none; color: var(--red); padding: 9px 15px; border-radius: 9px; font-weight: bold; cursor: pointer; font-size: 21px; }
+        
+        .hi-details { margin-top: 15px; padding-top: 15px; border-top: 3px dashed #e5e7eb; font-size: 22px; color: #4b5563; font-weight: bold; }
+        .hi-detail-row { display: flex; justify-content: space-between; margin-bottom: 9px; }
+        .hi-qty { color: var(--primary); font-weight: 900; margin-left: 6px; font-size: 24px; }
+        .hi-footer { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; border-top: 3px solid #f3f4f6; padding-top: 18px; }
+        .hi-footer-text { font-weight: bold; color: var(--text); font-size: 21px; }
+        .hi-edit { background: var(--primary); color: white; border: none; padding: 9px 18px; border-radius: 9px; font-weight: bold; cursor: pointer; font-size: 21px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
 
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
-        .report-table th, .report-table td { padding: 10px; border-bottom: 2px solid #eee; text-align: left; }
+        /* 今日報表 - 等比巨型化 */
+        #report-container { padding: 24px; }
+        .rep-title { font-size: 24px; font-weight: 900; margin-bottom: 12px; color: var(--primary); }
+        .rep-box { background: white; padding: 18px; border-radius: 12px; border: 2px solid #e5e7eb; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .rep-total-text { font-size: 22px; font-weight: bold; }
+        .rep-total-val { color: var(--red); font-size: 36px; font-weight: 900; }
+        .rep-subtitle { font-size: 24px; font-weight: 900; margin-top: 24px; margin-bottom: 12px; color: var(--primary); }
+        .rep-table-wrap { background: white; border-radius: 12px; border: 2px solid #e5e7eb; overflow: hidden; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 22px; }
+        .report-table th, .report-table td { padding: 12px; border-bottom: 2px solid #eee; text-align: left; }
         .report-table th { background: #f3f4f6; color: #4b5563; }
+        .rep-empty { text-align: center; color: #9ca3af; padding: 22px; }
+        .rep-item-name { font-weight: bold; }
+        .rep-item-qty { font-weight: 900; font-size: 27px; }
+
+        /* 訊息視窗等比放大 */
+        .msg-content { background: white !important; width: 100%; max-width: 630px; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 6px solid #fff; box-shadow: 0 22px 60px rgba(0,0,0,0.6); }
+        #msg-box-text { font-size: 36px; font-weight: 900; line-height: 1.6; color: #1f2937; padding: 45px 30px 15px; text-align: center; }
 
         #update-banner { position: absolute; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-size: 16px; justify-content: center; align-items: center; gap: 15px; cursor: pointer; }
         #print-area { display: none; }
         @media print { .app-container, .modal-overlay, #update-banner { display: none !important; } #print-area { display: block !important; width: 100%; max-width: 300px; font-family: monospace; padding: 10px; color: black; } @page { margin: 0; } }
 
         /* ==========================================
-           📱 手機版防呆縮放
+           📱 手機版防呆縮放 (確保小螢幕不斷版)
            ========================================== */
         @media (max-width: 767px) {
             .menu-section { flex: 0 1 42%; padding: 4px; }
@@ -271,11 +303,44 @@
             
             .submit-btn { padding: 8px; font-size: 18px; border-radius: 8px; margin-bottom: 0; }
 
+            /* 手機版彈窗微縮放 */
             .modal-header-bar { padding: 12px 50px 12px 16px; }
-            .modal-header-bar h2 { font-size: 20px !important; }
+            .modal-title-text { font-size: 20px !important; }
             .modal-close-btn { width: 36px; height: 36px; font-size: 36px; top: 8px; right: 8px; }
-            .history-date-header { font-size: 15px; padding: 8px 12px; }
             #msg-box-text { font-size: 20px; padding: 20px 10px 10px; }
+
+            .history-date-header { font-size: 15px; padding: 8px 12px; margin: 8px 0 4px 0; border-radius: 8px; }
+            .date-total { padding: 2px 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            
+            .history-item { padding: 12px; border-radius: 8px; margin-bottom: 8px; border-width: 1px; }
+            .hi-left { gap: 6px; }
+            .hi-id { padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+            .hi-time { font-size: 14px; }
+            .hi-type { padding: 2px 4px; border-radius: 4px; font-size: 12px; }
+            .hi-right { gap: 10px; }
+            .hi-total { font-size: 18px; }
+            .hi-del { padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+            
+            .hi-details { margin-top: 10px; padding-top: 10px; border-top-width: 2px; font-size: 15px; }
+            .hi-detail-row { margin-bottom: 6px; }
+            .hi-qty { font-size: 16px; margin-left: 4px; }
+            .hi-footer { margin-top: 12px; padding-top: 12px; border-top-width: 2px; }
+            .hi-footer-text { font-size: 14px; }
+            .hi-edit { padding: 6px 12px; border-radius: 6px; font-size: 14px; }
+
+            .mh-btn-report, .mh-btn-export { padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+            .mh-btn-clear { font-size: 13px; border-width: 1px; border-radius: 6px; padding: 6px 10px; margin-top: 2px; }
+
+            .rep-title { font-size: 16px; margin-bottom: 8px; }
+            .rep-box { padding: 12px; border-radius: 8px; border-width: 1.5px; }
+            .rep-total-text { font-size: 15px; }
+            .rep-total-val { font-size: 24px; }
+            .rep-subtitle { font-size: 16px; margin-top: 16px; margin-bottom: 8px; }
+            .rep-table-wrap { border-radius: 8px; border-width: 1.5px; }
+            .report-table { font-size: 15px; }
+            .report-table th, .report-table td { padding: 8px; border-bottom-width: 1.5px; }
+            .rep-empty { padding: 15px; }
+            .rep-item-qty { font-size: 18px; }
         }
     </style>
 </head>
@@ -357,7 +422,7 @@
                 <button class="np-btn" onclick="appendNum('8')">8</button>
                 <button class="np-btn" onclick="appendNum('9')">9</button>
 
-                <button class="np-btn" style="background:#fee2e2; color:var(--red); border-color:#fecaca;" onclick="setQuickAmount('clear')">清除</button>
+                <button class="np-btn" style="background:#fee2e2; color:var(--red); border-color:#fecaca; font-size:18px;" onclick="setQuickAmount('clear')">清除</button>
                 <button class="np-btn" onclick="appendNum('0')">0</button>
                 
                 <button class="np-btn" style="background:#e5e7eb; color:#4b5563; border-color:#d1d5db;" onclick="appendNum('back')">
@@ -369,8 +434,8 @@
                 </button>
             </div>
 
-            <div class="change-row" id="change-row-container"><span style="font-weight:900; color:#4b5563; font-size:16px;">找零</span><span class="change-val" id="change-val">$0</span></div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <div class="change-row" id="change-row-container"><span style="font-weight:900; color:#4b5563; font-size:18px;">找零</span><span class="change-val" id="change-val">$0</span></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                 <button class="submit-btn btn-print" onclick="checkout(true)">結帳+列印</button>
                 <button class="submit-btn btn-pay" onclick="checkout(false)">結帳</button>
             </div>
@@ -378,36 +443,42 @@
     </div>
 </div>
 
+<!-- ========================================================
+     ⭐ 歷史紀錄彈窗 (解放寬度！1.5倍超狂大字體！) ⭐
+     ======================================================== -->
 <div id="history-modal" class="modal-overlay" onclick="closeHistory()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header-bar">
             <button class="modal-close-btn" onclick="closeHistory()">×</button>
             
-            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <h2 style="margin:0; font-size:24px; font-weight:900;">📜 歷史訂單</h2>
-                <button onclick="openReport()" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">📊 今日報表</button>
-                <button onclick="exportCSV()" style="background:#6366f1; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">💾 匯出Excel</button>
+            <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+                <h2 class="modal-title-text">📜 歷史訂單</h2>
+                <button class="mh-btn-report" onclick="openReport()">📊 今日報表</button>
+                <button class="mh-btn-export" onclick="exportCSV()">💾 匯出Excel</button>
             </div>
-            <button onclick="askClearAllHistory()" style="font-size:15px; background:#fee2e2; color:var(--red); border:1px solid #fecaca; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; margin-top:4px;">清空全部</button>
+            <button class="mh-btn-clear" onclick="askClearAllHistory()">清空全部</button>
         </div>
         <div id="history-list-container"></div>
     </div>
 </div>
 
+<!-- ========================================================
+     ⭐ 今日報表彈窗 (同步 1.5 倍放大) ⭐
+     ======================================================== -->
 <div id="report-modal" class="modal-overlay" onclick="closeReport()">
-    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:400px;">
+    <div class="modal-content" style="max-width:600px;" onclick="event.stopPropagation()">
         <div class="modal-header-bar" style="background:var(--primary); color:white; border-bottom:none;">
-            <button class="modal-close-btn" onclick="closeReport()" style="color:white; top:12px;">×</button>
-            <h2 style="margin:0; font-size:22px; font-weight:900;">📊 今日營業報表</h2>
+            <button class="modal-close-btn" onclick="closeReport()" style="color:white; top:18px;">×</button>
+            <h2 class="modal-title-text">📊 今日營業報表</h2>
         </div>
-        <div id="report-container" style="padding:20px; background:#f9fafb;"></div>
+        <div id="report-container"></div>
     </div>
 </div>
 
 <div id="msg-box" class="modal-overlay">
     <div class="msg-content">
-        <div id="msg-box-text" style="white-space:pre-wrap;"></div>
-        <div id="msg-box-btns" style="padding:20px; display:flex; gap:10px;"></div>
+        <div id="msg-box-text"></div>
+        <div id="msg-box-btns" style="padding:0 30px 30px; display:flex; gap:15px;"></div>
     </div>
 </div>
 
@@ -475,7 +546,11 @@
             txt.innerHTML = text; btns.innerHTML = '';
             if (options.length === 0) options = [{ label: '確認好的', color: 'var(--primary)', val: true }];
             options.forEach(opt => {
-                const b = document.createElement('button'); b.style.flex = '1'; b.style.padding = '12px'; b.style.border = 'none'; b.style.borderRadius = '10px'; b.style.color = 'white'; b.style.fontWeight = '900'; b.style.fontSize = '22px'; b.innerText = opt.label; b.style.backgroundColor = opt.color; b.style.cursor = 'pointer';
+                const b = document.createElement('button'); b.style.flex = '1'; b.style.padding = '18px'; b.style.border = 'none'; b.style.borderRadius = '15px'; b.style.color = 'white'; b.style.fontWeight = '900'; b.style.fontSize = '33px'; b.innerText = opt.label; b.style.backgroundColor = opt.color; b.style.cursor = 'pointer';
+                
+                // 手機版防呆
+                if(window.innerWidth < 768) { b.style.padding = '12px'; b.style.fontSize = '20px'; b.style.borderRadius = '8px'; }
+                
                 b.onclick = () => { box.style.display = 'none'; resolve(opt.val); }; btns.appendChild(b);
             });
             box.style.display = 'flex';
@@ -582,7 +657,7 @@
         const cartHeader = document.getElementById('cart-header');
         if (editingOrderId !== null) {
             cartHeader.innerHTML = `
-                <span style="color:#fde047; font-size:16px; font-weight:bold;">✏️ 編輯舊單</span>
+                <span style="color:#fde047; font-size:16px; font-weight:bold;">✏️ 編輯單號 #${String(editingOrderId).padStart(3,'0')}</span>
                 <div class="cart-header-actions">
                     <div class="dining-toggle">
                         <button id="btn-takeout" class="dining-btn" onclick="setDining('外帶')">外帶</button>
@@ -594,7 +669,7 @@
             cartHeader.style.background = '#047857';
         } else {
             cartHeader.innerHTML = `
-                <span style="font-size:18px; font-weight:bold;">🛒 明細</span>
+                <span style="font-size:15px; font-weight:bold;">🛒 明細</span>
                 <div class="cart-header-actions">
                     <div class="dining-toggle">
                         <button id="btn-takeout" class="dining-btn" onclick="setDining('外帶')">外帶</button>
@@ -628,7 +703,7 @@
             return `
                 <div class="cart-item-wrapper ${isLast}">
                     <div class="cart-item-delete-bg" onclick="removeEntireItem(${index})">
-                        <svg style="width:32px;height:32px;fill:white;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        <svg style="width:28px;height:28px;fill:white;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                     </div>
                     <div class="cart-item-content ${isLast}" id="cart-content-${index}" 
                          onclick="handleCartItemClick(event, ${index})"
@@ -636,14 +711,14 @@
                          ontouchmove="handleTouchMove(event, ${index})"
                          ontouchend="handleTouchEnd(event, ${index})">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="display:flex; flex-direction:column;"><strong style="font-size:24px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280; font-size:16px; font-weight:bold;">$${unitPrice}</small></div>
-                            <div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--primary); font-size:26px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:40px; text-align:center; font-weight:900; font-size:26px;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
+                            <div style="display:flex; flex-direction:column;"><strong style="font-size:18px;">${m.name}${item.hasEgg ? ' <span style="color:var(--egg)">(+蛋)</span>' : ''}</strong><small style="color:#6b7280; font-size:14px; font-weight:bold;">$${unitPrice}</small></div>
+                            <div style="display:flex; align-items:center; gap:8px;"><strong style="color:var(--primary); font-size:20px;">$${unitPrice * item.qty}</strong><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, -1)">-</button><span style="width:32px; text-align:center; font-weight:bold; font-size:18px;">${item.qty}</span><button class="qty-btn" onclick="event.stopPropagation(); changeQty(${index}, 1)">+</button></div></div>
                         </div>
                         ${m.canAddEgg ? `<div class="addon-toggle ${item.hasEgg ? 'active' : ''}" onclick="event.stopPropagation(); toggleEgg(${index})">${item.hasEgg ? '✅ 已加蛋' : '🍳 加蛋 +$10'}</div>` : ''}
                     </div>
                 </div>
             `;
-        }).join('') || '<div style="padding:40px; text-align:center; color:#9ca3af; font-size:20px; font-weight:bold;">等待點餐...</div>';
+        }).join('') || '<div style="padding:40px; text-align:center; color:#9ca3af; font-size:18px; font-weight:bold;">等待點餐...</div>';
         
         document.getElementById('total-price').innerText = '$' + total;
         document.getElementById('paid-text').innerText = paidAmount;
@@ -737,20 +812,20 @@
 
         if (isPrint) {
             const area = document.getElementById('print-area');
-            area.innerHTML = `<div style="text-align:center; font-size:20px; font-weight:bold;">五結大腸麵線</div>
-                <div style="text-align:center; font-size:24px; font-weight:900; margin:8px 0; border:2px solid black; padding:4px;">${currentOrder.dining} ${currentOrder.queue ? '- ' + currentOrder.queue + '號' : ''}</div>
+            area.innerHTML = `<div style="text-align:center; font-size:24px; font-weight:bold;">五結大腸麵線</div>
+                <div style="text-align:center; font-size:32px; font-weight:900; margin:10px 0; border:2px solid black; padding:5px;">${currentOrder.dining} ${currentOrder.queue ? '- ' + currentOrder.queue + '號' : ''}</div>
                 <hr>
-                ${currentOrder.items.map(i=>`<div style="font-size:16px; display:flex; justify-content:space-between; margin-bottom:4px;"><span>${i.name} x${i.qty}</span><span>$${i.subtotal}</span></div>`).join('')}
+                ${currentOrder.items.map(i=>`<div style="font-size:20px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.name} x${i.qty}</span><span>$${i.subtotal}</span></div>`).join('')}
                 <hr>
-                <div style="font-size:18px; font-weight:900; text-align:right;">總計: $${total}</div>
-                <div style="font-size:14px; text-align:right; margin-top:4px;">收現: $${paid} | 找零: $${change}</div>
-                <hr><center style="font-size:14px;">謝謝光臨</center>`;
+                <div style="font-size:22px; font-weight:900; text-align:right;">總計: $${total}</div>
+                <div style="font-size:18px; text-align:right; margin-top:5px;">收現: $${paid} | 找零: $${change}</div>
+                <hr><center style="font-size:18px;">謝謝光臨</center>`;
             window.print();
         }
 
         const changeColor = change >= 0 ? 'var(--green)' : 'var(--red)';
-        let msg = `✅ 結帳成功！\n\n<span style="font-size:24px; font-weight:900; color:var(--primary);">${currentOrder.dining} ${queueStr ? `| ${queueStr}` : ''}</span>\n<hr style="border:none; border-top:2px dashed #ddd; margin:12px 0;">\n<span style="font-size:20px; color:#6b7280; font-weight:bold;">總計：$${total}</span>`;
-        msg += `\n<span style="font-size:20px; color:#6b7280; font-weight:bold;">收現：$${paid}</span>\n<span style="color:${changeColor}; font-size:42px; display:block; margin-top:6px; font-weight:900;">找零 $${change}</span>`;
+        let msg = `✅ 結帳成功！\n\n<span style="font-size:36px; font-weight:900; color:var(--primary);">${currentOrder.dining} ${queueStr ? `| ${queueStr}` : ''}</span>\n<hr style="border:none; border-top:3px dashed #ddd; margin:15px 0;">\n<span style="font-size:26px; color:#6b7280; font-weight:900;">總計：$${total}</span>`;
+        msg += `\n<span style="font-size:26px; color:#6b7280; font-weight:900;">收現：$${paid}</span>\n<span style="color:${changeColor}; font-size:60px; display:block; margin-top:10px; font-weight:900;">找零 $${change}</span>`;
 
         await showMsg(msg);
 
@@ -764,7 +839,7 @@
     
     function renderHistory() {
         const container = document.getElementById('history-list-container');
-        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#9ca3af; font-size:18px; font-weight:bold;">尚無紀錄</div>'; return; }
+        if (orderHistory.length === 0) { container.innerHTML = '<div style="text-align:center; padding:50px; color:#9ca3af; font-size:24px; font-weight:900;">尚無紀錄</div>'; return; }
         
         const groupedOrders = [];
         orderHistory.forEach((order, index) => {
@@ -781,37 +856,35 @@
 
             html += `
             <div class="history-date-header">
-                <div style="display:flex; align-items:center; gap:6px;">${dateLabel}</div>
-                <div style="background:white; color:var(--red); padding:2px 8px; border-radius:8px; font-size:15px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">營業額 $${dailyTotal}</div>
+                <div class="date-label">${dateLabel}</div>
+                <div class="date-total">營業額 $${dailyTotal}</div>
             </div>`;
 
             group.orders.forEach(o => {
                 const changeColor = o.change >= 0 ? 'var(--green)' : 'var(--red)';
-                // ⭐ 每日單號顯示：只顯示每日歸零的號碼，隱藏系統單號
                 const qNum = o.queue ? String(o.queue).padStart(3,'0') : String(o.id).padStart(3,'0');
-                const dType = o.dining ? `<span style="background:#e5e7eb; padding:2px 4px; border-radius:4px; font-size:12px;">${o.dining}</span>` : '';
                 
                 html += `
-                <div class="history-item" style="background:white; padding:12px; border-radius:10px; border:1.5px solid #ddd; margin-bottom:8px;" onclick="toggleDetails(${o.id})">
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">
-                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                            <span style="background:var(--primary); color:white; padding:2px 6px; border-radius:6px; font-size:16px;">#${qNum}</span>
-                            <span style="color:#6b7280; font-size:14px;">${o.time}</span>
-                            ${dType}
+                <div class="history-item" onclick="toggleDetails(${o.id})">
+                    <div class="hi-header">
+                        <div class="hi-left">
+                            <span class="hi-id">#${qNum}</span>
+                            <span class="hi-time">${o.time}</span>
+                            ${o.dining ? `<span class="hi-type">${o.dining}</span>` : ''}
                         </div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <strong style="color:var(--red); font-size:20px;">$${o.total}</strong>
-                            <button onclick="event.stopPropagation(); askDeleteOrder(${o.originalIndex})" style="background:#fee2e2; border:none; color:var(--red); padding:6px 10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:16px;">🗑️</button>
+                        <div class="hi-right">
+                            <strong class="hi-total">$${o.total}</strong>
+                            <button class="hi-del" onclick="event.stopPropagation(); askDeleteOrder(${o.originalIndex})">🗑️</button>
                         </div>
                     </div>
-                    <div id="details-${o.id}" style="display:none; margin-top:10px; padding-top:10px; border-top:2px dashed #e5e7eb; font-size:15px; color:#4b5563;">
-                        ${o.items.map(i=>`<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>${i.name} <span style="color:var(--primary); font-weight:bold; margin-left:4px;">x${i.qty}</span></span><span>$${i.subtotal}</span></div>`).join('')}
+                    <div id="details-${o.id}" class="hi-details" style="display:none;">
+                        ${o.items.map(i=>`<div class="hi-detail-row"><span>${i.name} <span class="hi-qty">x${i.qty}</span></span><span>$${i.subtotal}</span></div>`).join('')}
                         
-                        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; border-top:2px solid #f3f4f6; padding-top:12px;">
-                            <div style="font-weight:bold; color:var(--text); font-size:14px;">
-                                收現: $${o.paid} <span style="margin:0 6px; color:#d1d5db;">|</span> <span style="color:${changeColor};">找零: $${o.change}</span>
+                        <div class="hi-footer">
+                            <div class="hi-footer-text">
+                                收現: $${o.paid} <span style="margin:0 9px; color:#d1d5db;">|</span> <span style="color:${changeColor};">找零: $${o.change}</span>
                             </div>
-                            <button onclick="event.stopPropagation(); editOrder(${o.originalIndex})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">✏️ 編輯</button>
+                            <button class="hi-edit" onclick="event.stopPropagation(); editOrder(${o.originalIndex})">✏️ 編輯</button>
                         </div>
                     </div>
                 </div>
@@ -832,7 +905,7 @@
 
     async function askClearAllHistory() {
         if (orderHistory.length === 0) return;
-        if (await showMsg('⚠️ 警告：確定要清空所有紀錄嗎？', [{label:'取消', color:'#9ca3af', val:false}, {label:'清空', color: 'var(--red)', val:true}])) {
+        if (await showMsg('⚠️ 警告：確定要清空「所有的」歷史紀錄嗎？\n清空後無法復原！', [{label:'取消', color:'#9ca3af', val:false}, {label:'確定清空', color: 'var(--red)', val:true}])) {
             orderHistory = []; localStorage.setItem('wujie_orders', JSON.stringify(orderHistory)); renderHistory();
         }
     }
@@ -854,22 +927,22 @@
             });
         });
 
-        let html = `<div style="font-size:16px; font-weight:900; margin-bottom:8px; color:var(--primary);">💰 今日營收統計</div>`;
-        html += `<div style="background:white; padding:12px; border-radius:8px; border:1.5px solid #e5e7eb; box-shadow:0 1px 3px rgba(0,0,0,0.02);">`;
-        html += `<div style="font-size:15px; font-weight:bold;">總營業額：<span style="color:var(--red); font-size:24px; font-weight:900;">$${dailyTotal}</span></div>`;
+        let html = `<div class="rep-title">💰 今日營收統計</div>`;
+        html += `<div class="rep-box">`;
+        html += `<div class="rep-total-text">總營業額：<span class="rep-total-val">$${dailyTotal}</span></div>`;
         html += `</div>`;
 
-        html += `<div style="font-size:16px; font-weight:900; margin-top:16px; margin-bottom:8px; color:var(--primary);">📦 備料銷售明細</div>`;
-        html += `<div style="background:white; border-radius:8px; border:1.5px solid #e5e7eb; overflow:hidden;"><table class="report-table">`;
+        html += `<div class="rep-subtitle">📦 備料銷售明細</div>`;
+        html += `<div class="rep-table-wrap"><table class="report-table">`;
         html += `<tr><th>品名</th><th>賣出數量</th></tr>`;
 
         let sortedItems = Object.entries(itemStats).sort((a,b) => b[1] - a[1]);
         if (sortedItems.length === 0) {
-            html += `<tr><td colspan="2" style="text-align:center; color:#9ca3af; padding:15px;">今日尚無銷售紀錄</td></tr>`;
+            html += `<tr><td colspan="2" class="rep-empty">今日尚無銷售紀錄</td></tr>`;
         } else {
             sortedItems.forEach(([name, qty]) => {
                 const highlight = name.includes('加蛋') ? 'color:var(--egg);' : 'color:var(--primary);';
-                html += `<tr><td style="font-weight:bold;">${name}</td><td style="${highlight} font-weight:900; font-size:18px;">${qty} 份</td></tr>`;
+                html += `<tr><td class="rep-item-name">${name}</td><td class="rep-item-qty" style="${highlight}">${qty} 份</td></tr>`;
             });
         }
         html += `</table></div>`;
@@ -880,7 +953,7 @@
     function closeReport() { document.getElementById('report-modal').style.display = 'none'; }
 
     function exportCSV() {
-        if (orderHistory.length === 0) return alert('沒有資料可匯出！');
+        if (orderHistory.length === 0) return alert('沒有資料可以匯出喔！');
         let csv = "data:text/csv;charset=utf-8,\uFEFF";
         csv += "每日單號,系統單號,日期,時間,內用/外帶,總金額,收現,找零,餐點明細\n";
         
