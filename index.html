@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 版本號碼：1.5.7 (主畫面維持 1.5.3 完美壓縮，歷史訂單全比例 1.5 倍等比巨型化) -->
-    <meta name="app-version" content="1.5.7">
+    <!-- 版本號碼：1.5.8 (結帳成功彈窗加入「餐點明細清單」，防超出高度自動捲動) -->
+    <meta name="app-version" content="1.5.8">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -244,8 +244,8 @@
         .rep-item-qty { font-weight: 900; font-size: 27px; }
 
         /* 訊息視窗等比放大 */
-        .msg-content { background: white !important; width: 100%; max-width: 630px; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 6px solid #fff; box-shadow: 0 22px 60px rgba(0,0,0,0.6); }
-        #msg-box-text { font-size: 36px; font-weight: 900; line-height: 1.6; color: #1f2937; padding: 45px 30px 15px; text-align: center; }
+        .msg-content { background: white !important; width: 100%; max-width: 630px; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; border: 6px solid #fff; box-shadow: 0 22px 60px rgba(0,0,0,0.6); max-height: 90dvh; }
+        #msg-box-text { font-size: 36px; font-weight: 900; line-height: 1.6; color: #1f2937; padding: 30px 30px 15px; text-align: center; overflow-y: auto; }
 
         #update-banner { position: absolute; top: 0; left: 0; width: 100%; background: #1e40af; color: white; padding: 12px; text-align: center; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-size: 16px; justify-content: center; align-items: center; gap: 15px; cursor: pointer; }
         #print-area { display: none; }
@@ -824,8 +824,19 @@
         }
 
         const changeColor = change >= 0 ? 'var(--green)' : 'var(--red)';
-        let msg = `✅ 結帳成功！\n\n<span style="font-size:36px; font-weight:900; color:var(--primary);">${currentOrder.dining} ${queueStr ? `| ${queueStr}` : ''}</span>\n<hr style="border:none; border-top:3px dashed #ddd; margin:15px 0;">\n<span style="font-size:26px; color:#6b7280; font-weight:900;">總計：$${total}</span>`;
-        msg += `\n<span style="font-size:26px; color:#6b7280; font-weight:900;">收現：$${paid}</span>\n<span style="color:${changeColor}; font-size:60px; display:block; margin-top:10px; font-weight:900;">找零 $${change}</span>`;
+        
+        // 建立明細列表 HTML
+        let itemsHtml = `<div style="text-align:left; background:#f3f4f6; padding:16px; border-radius:12px; margin:15px 0; border:2px solid #e5e7eb; max-height:35vh; overflow-y:auto;">`;
+        currentOrder.items.forEach(i => {
+            itemsHtml += `<div style="display:flex; justify-content:space-between; font-size:clamp(18px, 4vw, 24px); font-weight:900; margin-bottom:8px; color:#4b5563;"><span>${i.name} <span style="color:var(--primary); margin-left:8px;">x${i.qty}</span></span><span>$${i.subtotal}</span></div>`;
+        });
+        itemsHtml += `</div>`;
+
+        let msg = `<div style="font-size:clamp(28px, 6vw, 36px); font-weight:900; color:var(--green); margin-bottom:10px;">✅ 結帳成功！</div>`;
+        msg += `<div style="font-size:clamp(22px, 5vw, 28px); font-weight:900; color:var(--primary);">${currentOrder.dining} ${queueStr ? `| ${queueStr}` : ''}</div>`;
+        msg += itemsHtml;
+        msg += `<div style="display:flex; justify-content:space-between; font-size:clamp(18px, 4vw, 24px); color:#6b7280; font-weight:900; padding:0 10px; border-top:3px dashed #ddd; padding-top:15px;"><span>總計：$${total}</span><span>收現：$${paid}</span></div>`;
+        msg += `<div style="color:${changeColor}; font-size:clamp(40px, 8vw, 60px); margin-top:10px; font-weight:900;">找零 $${change}</div>`;
 
         await showMsg(msg);
 
